@@ -9,6 +9,7 @@
 #include "G4Version.hh"
 #include "G4VisExecutive.hh"
 #include "G4ios.hh"
+#include "G4OpticalPhysics.hh"
 
 #include <memory>
 
@@ -28,7 +29,13 @@ int main(int argc, char** argv)
     new AmBeTagger::DetectorConstruction;
 
     runManager->SetUserInitialization(detectorConstruction);
-    runManager->SetUserInitialization(new FTFP_BERT);
+
+    // We configure optical properties here
+    FTFP_BERT* physicsList = new FTFP_BERT;
+    physicsList->RegisterPhysics(new G4OpticalPhysics);
+    runManager->SetUserInitialization(physicsList);
+
+
     runManager->SetUserInitialization(
         new AmBeTagger::ActionInitialization(detectorConstruction));
 

@@ -14,6 +14,7 @@ class RunAction final : public G4UserRunAction
   void EndOfRunAction(const G4Run* run) override;
 
   void AddEventEnergyDeposit(G4double energyDeposit);
+  void AddEventPhotonCounts(G4int scintillationPhotons, G4int cerenkovPhotons);
 
  private:
   G4int eventCount_ = 0;
@@ -22,5 +23,7 @@ class RunAction final : public G4UserRunAction
   G4double minEnergyDeposit_ = 0.0;
   G4double maxEnergyDeposit_ = 0.0;
   G4double totalEnergyDepositSquared_ = 0.0;
+  G4int totalScintillationPhotonCount_ = 0;
+  G4int totalCerenkovPhotonCount_ = 0;
 };
 }

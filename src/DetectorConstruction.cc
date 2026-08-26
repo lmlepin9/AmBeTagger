@@ -10,6 +10,8 @@
 #include "G4ThreeVector.hh"
 #include "globals.hh"
 
+#include "G4MaterialPropertiesTable.hh"
+
 namespace AmBeTagger
 {
 G4VPhysicalVolume* DetectorConstruction::Construct()
@@ -31,6 +33,37 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   bgo->AddElement(bismuth,4);
   bgo->AddElement(germanium,3);
   bgo->AddElement(oxygen,12);
+
+
+  // Configure optical properties here. For now use a simplified version! 
+  const std::vector<G4double> photonEnergy = {
+    2.48 * eV,
+    2.76 * eV,
+    3.10 * eV};
+
+  const std::vector<G4double> bgoRefractiveIndex = {
+      2.15,
+      2.15,
+      2.15};
+
+  const std::vector<G4double> bgoScintillation = {
+      0.2,
+      1.0,
+      0.2};
+
+  G4MaterialPropertiesTable* bgoMpt = new G4MaterialPropertiesTable;
+
+  bgoMpt->AddProperty("RINDEX", photonEnergy, bgoRefractiveIndex);
+  bgoMpt->AddProperty("SCINTILLATIONCOMPONENT1", photonEnergy, bgoScintillation);
+
+  bgoMpt->AddConstProperty("SCINTILLATIONYIELD", 1000. / MeV);
+  bgoMpt->AddConstProperty("RESOLUTIONSCALE", 2.0);
+  bgoMpt->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 300.0 * ns);
+  bgoMpt->AddConstProperty("SCINTILLATIONYIELD1", 1.0);
+
+  bgo->SetMaterialPropertiesTable(bgoMpt);
+
+
 
   constexpr G4double worldHalfLength = 50.0 * cm;
 
@@ -59,21 +92,12 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     0.0 * deg,
     360.0 * deg);
 
-
-    /*
-   G4Box* testSolid = new G4Box(
-    "TestSolid",
-    testHalfLength,
-    testHalfLength,
-    testHalfLength);
-    */ 
-
    scoringVolume_ = new G4LogicalVolume(
         bgoSolid,
         bgo,
         "bgoLogical");
 
-   // Physical placement of the water cube 
+   // Physical placement of the BGO cube 
    new G4PVPlacement(
     nullptr,          // no rotation
     G4ThreeVector{},  // position: (0, 0, 0)

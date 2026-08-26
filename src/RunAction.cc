@@ -16,6 +16,8 @@ void RunAction::BeginOfRunAction(const G4Run*)
   minEnergyDeposit_ = 0.0;
   maxEnergyDeposit_ = 0.0;
   totalEnergyDepositSquared_ = 0.0;
+  totalScintillationPhotonCount_ = 0;
+  totalCerenkovPhotonCount_ = 0;
 }
 
 void RunAction::EndOfRunAction(const G4Run*)
@@ -40,6 +42,27 @@ void RunAction::EndOfRunAction(const G4Run*)
   G4cout << "  RMS Edep = " << rmsEnergyDeposit / MeV << " MeV" << G4endl;
   G4cout << "  min Edep = " << minEnergyDeposit_ / MeV << " MeV" << G4endl;
   G4cout << "  max Edep = " << maxEnergyDeposit_ / MeV << " MeV" << G4endl;
+
+  G4cout << "--------------------------------------------------" << G4endl;
+
+  const G4double scintillationPhotonsPerMeV =
+    totalEnergyDeposit_ > 0.0
+        ? totalScintillationPhotonCount_ / (totalEnergyDeposit_ / MeV)
+        : 0.0;
+
+  const G4double cerenkovPhotonsPerMeV = 
+    totalEnergyDeposit_ > 0.0
+      ? totalCerenkovPhotonCount_ / (totalEnergyDeposit_ / MeV): 0.0;
+
+  G4cout << "Run optical photon summary:" << G4endl;
+  G4cout << "  scintillation photons = "
+        << totalScintillationPhotonCount_ << G4endl;
+  G4cout << "  Cerenkov photons = "
+        << totalCerenkovPhotonCount_ << G4endl;
+  G4cout << "  scintillation photons / MeV deposited = "
+        << scintillationPhotonsPerMeV << G4endl;
+  G4cout << " Cerenkov photons / MeV deposited = "
+        << cerenkovPhotonsPerMeV << G4endl;
 }
 
 void RunAction::AddEventEnergyDeposit(G4double energyDeposit)
@@ -64,4 +87,13 @@ void RunAction::AddEventEnergyDeposit(G4double energyDeposit)
   totalEnergyDepositSquared_ += energyDeposit * energyDeposit;
   ++eventCount_;
 }
+
+void RunAction::AddEventPhotonCounts(G4int scintillationPhotons,
+                                     G4int cerenkovPhotons)
+{
+  totalScintillationPhotonCount_ += scintillationPhotons;
+  totalCerenkovPhotonCount_ += cerenkovPhotons;
+}
+
+
 }

@@ -16,9 +16,13 @@ class EventAction final : public G4UserEventAction
   void BeginOfEventAction(const G4Event* event) override;
   void EndOfEventAction(const G4Event* event) override;
   void AddEnergyDeposit(G4double energyDeposit);
+  void AddScintillationPhoton();
+  void AddCherenkovPhoton();
 
  private:
   RunAction* runAction_;
   G4double eventEnergyDeposit_ = 0.0;
+  G4int scintillationPhotonCount_ = 0;
+  G4int cherenkovPhotonCount_ = 0; 
 };
 }
