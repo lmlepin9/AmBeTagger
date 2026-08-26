@@ -12,6 +12,9 @@
 
 #include "G4MaterialPropertiesTable.hh"
 
+#include "G4LogicalBorderSurface.hh"
+#include "G4OpticalSurface.hh"
+
 namespace AmBeTagger
 {
 G4VPhysicalVolume* DetectorConstruction::Construct()
@@ -125,16 +128,52 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         bgo,
         "bgoLogical");
 
-   // Physical placement of the BGO cube 
-   new G4PVPlacement(
-    nullptr,          // no rotation
-    G4ThreeVector{},  // position: (0, 0, 0)
-    scoringVolume_,   // logical volume being placed
-    "bgoPhysical",   // name of this physical placement
-    worldLogical,     // mother logical volume
-    false,            // not using boolean-volume placement mode
-    0,                // copy number
-    true);            // check for overlaps
+  G4VPhysicalVolume* bgoPhysical = new G4PVPlacement(
+    nullptr,
+    G4ThreeVector{},
+    scoringVolume_,
+    "bgoPhysical",
+    worldLogical,
+    false,
+    0,
+    true);
+
+  G4VPhysicalVolume* worldPhysical = new G4PVPlacement(
+    nullptr,
+    G4ThreeVector{},
+    worldLogical,
+    "WorldPhysical",
+    nullptr,
+    false,
+    0,
+    true);
+
+
+  const std::vector<G4double> wrapReflectivity = {
+    0.98,
+    0.98,
+    0.98};
+
+  const std::vector<G4double> wrapEfficiency = {
+    0.0,
+    0.0,
+    0.0};
+
+  G4MaterialPropertiesTable* wrapMpt = new G4MaterialPropertiesTable;
+  wrapMpt->AddProperty("REFLECTIVITY", photonEnergy, wrapReflectivity);
+  wrapMpt->AddProperty("EFFICIENCY", photonEnergy, wrapEfficiency);
+
+  G4OpticalSurface* wrapSurface = new G4OpticalSurface("BgoWrapSurface");
+  wrapSurface->SetType(dielectric_metal);
+  wrapSurface->SetFinish(ground);
+  wrapSurface->SetModel(unified);
+  wrapSurface->SetMaterialPropertiesTable(wrapMpt);
+
+  new G4LogicalBorderSurface(
+      "BgoToAirWrapSurface",
+      bgoPhysical,
+      worldPhysical,
+      wrapSurface);
 
 
   constexpr G4double couplingRadius = 2.5 * cm;
@@ -187,16 +226,6 @@ new G4PVPlacement(
     pmtPlaneVolume_,
     "PmtPlanePhysical",
     worldLogical,
-    false,
-    0,
-    true);
-
-G4VPhysicalVolume* worldPhysical = new G4PVPlacement(
-    nullptr,
-    G4ThreeVector{},
-    worldLogical,
-    "WorldPhysical",
-    nullptr,
     false,
     0,
     true);

@@ -48,8 +48,11 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   }
 
 
-  // This is the total energy, regardless of the process... 
+  if (track->GetDefinition() != G4OpticalPhoton::Definition()) {
   eventAction_->AddEnergyDeposit(step->GetTotalEnergyDeposit());
+}
+
+
 
   const std::vector<const G4Track*>* secondaries =
     step->GetSecondaryInCurrentStep();
