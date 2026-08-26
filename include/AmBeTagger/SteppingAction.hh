@@ -1,6 +1,7 @@
 #pragma once
 
 #include "G4UserSteppingAction.hh"
+#include "AmBeTagger/PmtResponse.hh"
 
 class G4Step;
 
@@ -19,6 +20,7 @@ class SteppingAction final : public G4UserSteppingAction
 
  private:
   EventAction* eventAction_;
+  PmtResponse* pmtResponse_;
   const DetectorConstruction* detectorConstruction_;
 };
 }

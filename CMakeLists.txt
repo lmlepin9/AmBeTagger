@@ -9,6 +9,7 @@ add_executable(ambe_tagger
   src/EventAction.cc
   src/SteppingAction.cc
   src/RunAction.cc
+  src/PmtResponse.cc
 )
 target_compile_features(ambe_tagger PRIVATE cxx_std_17)
 target_include_directories(ambe_tagger PRIVATE include)
