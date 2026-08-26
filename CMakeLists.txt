@@ -20,6 +20,9 @@ set(AMBETAGGER_MACROS
   macros/run_10_gamma.mac
   macros/run_1000_gamma.mac
   macros/run_100_optical_photons.mac
+  macros/optical_backward.mac
+  macros/optical_forward.mac
+  macros/optical_sideways.mac
 )
 
 foreach(_macro ${AMBETAGGER_MACROS})
