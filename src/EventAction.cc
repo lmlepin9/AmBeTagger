@@ -19,6 +19,8 @@ void EventAction::BeginOfEventAction(const G4Event*)
   cherenkovPhotonCount_ = 0;
   pmtPhotonCount_ = 0; 
   photoelectronCount_ = 0; 
+  earliestPhotoelectronTime_ = 0.0;
+  sumPhotoelectronTime_ = 0.0;
 }
 
 void EventAction::EndOfEventAction(const G4Event* event)
@@ -32,6 +34,15 @@ void EventAction::EndOfEventAction(const G4Event* event)
   G4cout << "Cherenkov photons = " << cherenkovPhotonCount_ << G4endl; 
   G4cout << "PMT plane photon = " << pmtPhotonCount_ << G4endl; 
   G4cout << "Photoelectrons = " << photoelectronCount_ << G4endl;
+
+  if (photoelectronCount_ > 0) {
+  G4cout << "Earliest PE time = "
+       << earliestPhotoelectronTime_ / ns << " ns" << G4endl;
+
+  G4cout << "Mean PE time = "
+         << (sumPhotoelectronTime_ / photoelectronCount_) / ns
+         << " ns" << G4endl;
+  }
 }
 
      
@@ -59,9 +70,15 @@ void EventAction::AddPmtPhoton()
   ++pmtPhotonCount_;
 }
 
-void EventAction::AddPhotoelectron()
+void EventAction::AddPhotoelectron(G4double time)
 {
-  ++photoelectronCount_ ;
+
+  if (photoelectronCount_ == 0 || time < earliestPhotoelectronTime_) {
+    earliestPhotoelectronTime_ = time;
+  }
+
+  sumPhotoelectronTime_ += time;
+  ++photoelectronCount_;
 }
 
 

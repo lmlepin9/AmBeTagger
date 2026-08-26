@@ -49,7 +49,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   eventAction_->AddPmtPhoton();
 
   if (pmtResponse_->ProducesPhotoelectron(track->GetKineticEnergy())) {
-  eventAction_->AddPhotoelectron();
+  eventAction_->AddPhotoelectron(track->GetGlobalTime());
   }
 
   track->SetTrackStatus(fStopAndKill);

@@ -19,7 +19,7 @@ class EventAction final : public G4UserEventAction
   void AddScintillationPhoton();
   void AddCherenkovPhoton();
   void AddPmtPhoton(); 
-  void AddPhotoelectron();
+  void AddPhotoelectron(G4double time);
 
  private:
   RunAction* runAction_;
@@ -28,5 +28,7 @@ class EventAction final : public G4UserEventAction
   G4int cherenkovPhotonCount_ = 0; 
   G4int pmtPhotonCount_ = 0; 
   G4int photoelectronCount_ = 0; 
+  G4double earliestPhotoelectronTime_ = 0.0;
+  G4double sumPhotoelectronTime_ = 0.0;
 };
 }
