@@ -13,10 +13,12 @@ void EventAction::BeginOfEventAction(const G4Event*)
 
 void EventAction::EndOfEventAction(const G4Event* event)
 {
+  if (event->GetEventID() < 10) {
   G4cout << "Event " << event->GetEventID()
          << " BGO energy deposit = "
          << eventEnergyDeposit_ / MeV << " MeV" << G4endl;
-         
+}
+     
   runAction_->AddEventEnergyDeposit(eventEnergyDeposit_);
 }
 

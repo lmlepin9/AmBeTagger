@@ -4,6 +4,8 @@
 #include "G4SystemOfUnits.hh"
 #include "G4ios.hh"
 
+#include <cmath>
+
 namespace AmBeTagger
 {
 void RunAction::BeginOfRunAction(const G4Run*)
@@ -13,6 +15,7 @@ void RunAction::BeginOfRunAction(const G4Run*)
   totalEnergyDeposit_ = 0.0;
   minEnergyDeposit_ = 0.0;
   maxEnergyDeposit_ = 0.0;
+  totalEnergyDepositSquared_ = 0.0;
 }
 
 void RunAction::EndOfRunAction(const G4Run*)
@@ -20,11 +23,21 @@ void RunAction::EndOfRunAction(const G4Run*)
   const G4double meanEnergyDeposit =
       eventCount_ > 0 ? totalEnergyDeposit_ / eventCount_ : 0.0;
 
+  const G4double meanSquareEnergyDeposit =
+    eventCount_ > 0 ? totalEnergyDepositSquared_ / eventCount_ : 0.0;
+
+  const G4double variance =
+      meanSquareEnergyDeposit - meanEnergyDeposit * meanEnergyDeposit;
+
+  const G4double rmsEnergyDeposit =
+      variance > 0.0 ? std::sqrt(variance) : 0.0;
+
   G4cout << "Run BGO energy summary:" << G4endl;
   G4cout << "  events = " << eventCount_ << G4endl;
   G4cout << "  zero-deposit events = " << zeroDepositEventCount_ << G4endl;
   G4cout << "  total Edep = " << totalEnergyDeposit_ / MeV << " MeV" << G4endl;
   G4cout << "  mean Edep = " << meanEnergyDeposit / MeV << " MeV" << G4endl;
+  G4cout << "  RMS Edep = " << rmsEnergyDeposit / MeV << " MeV" << G4endl;
   G4cout << "  min Edep = " << minEnergyDeposit_ / MeV << " MeV" << G4endl;
   G4cout << "  max Edep = " << maxEnergyDeposit_ / MeV << " MeV" << G4endl;
 }
@@ -48,6 +61,7 @@ void RunAction::AddEventEnergyDeposit(G4double energyDeposit)
   }
 
   totalEnergyDeposit_ += energyDeposit;
+  totalEnergyDepositSquared_ += energyDeposit * energyDeposit;
   ++eventCount_;
 }
 }

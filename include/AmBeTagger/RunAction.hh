@@ -21,5 +21,6 @@ class RunAction final : public G4UserRunAction
   G4double totalEnergyDeposit_ = 0.0;
   G4double minEnergyDeposit_ = 0.0;
   G4double maxEnergyDeposit_ = 0.0;
+  G4double totalEnergyDepositSquared_ = 0.0;
 };
 }

@@ -18,6 +18,7 @@ set(AMBETAGGER_MACROS
   macros/run_one.mac
   macros/init_vis.mac
   macros/run_10_gamma.mac
+  macros/run_1000_gamma.mac
 )
 
 foreach(_macro ${AMBETAGGER_MACROS})
