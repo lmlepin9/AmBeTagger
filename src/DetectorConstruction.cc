@@ -71,6 +71,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   bgo->SetMaterialPropertiesTable(bgoMpt);
 
+
+
   const std::vector<G4double> airRefractiveIndex = {
       1.0,
       1.0,
@@ -80,6 +82,15 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   airMpt->AddProperty("RINDEX", photonEnergy, airRefractiveIndex);
   air->SetMaterialPropertiesTable(airMpt);
 
+  G4Material* opticalCoupling = nist->FindOrBuildMaterial("G4_SILICON_DIOXIDE");
+  const std::vector<G4double> couplingRefractiveIndex = {
+      1.50,
+      1.50,
+      1.50};
+
+  G4MaterialPropertiesTable* couplingMpt = new G4MaterialPropertiesTable;
+  couplingMpt->AddProperty("RINDEX", photonEnergy, couplingRefractiveIndex);
+  opticalCoupling->SetMaterialPropertiesTable(couplingMpt);
 
 
   constexpr G4double worldHalfLength = 50.0 * cm;
@@ -125,19 +136,37 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     0,                // copy number
     true);            // check for overlaps
 
-  G4VPhysicalVolume* worldPhysical = new G4PVPlacement(
+
+  constexpr G4double couplingRadius = 2.5 * cm;
+  constexpr G4double couplingHalfThickness = 0.5 * mm;
+  constexpr G4double couplingZ = 2.55 * cm;
+
+  G4Tubs* couplingSolid = new G4Tubs(
+      "CouplingSolid",
+      0.0 * cm,
+      couplingRadius,
+      couplingHalfThickness,
+      0.0 * deg,
+      360.0 * deg);
+
+  G4LogicalVolume* couplingLogical = new G4LogicalVolume(
+      couplingSolid,
+      opticalCoupling,
+      "CouplingLogical");
+
+  new G4PVPlacement(
       nullptr,
-      G4ThreeVector{},
+      G4ThreeVector(0.0 * cm, 0.0 * cm, couplingZ),
+      couplingLogical,
+      "CouplingPhysical",
       worldLogical,
-      "WorldPhysical",
-      nullptr,
       false,
       0,
       true);
 
 constexpr G4double pmtPlaneRadius = 2.5 * cm;
 constexpr G4double pmtPlaneHalfThickness = 0.05 * mm;
-constexpr G4double pmtPlaneZ = 2.6 * cm;
+constexpr G4double pmtPlaneZ = 2.61 * cm;
 
 G4Tubs* pmtPlaneSolid = new G4Tubs(
     "PmtPlaneSolid",
@@ -158,6 +187,16 @@ new G4PVPlacement(
     pmtPlaneVolume_,
     "PmtPlanePhysical",
     worldLogical,
+    false,
+    0,
+    true);
+
+G4VPhysicalVolume* worldPhysical = new G4PVPlacement(
+    nullptr,
+    G4ThreeVector{},
+    worldLogical,
+    "WorldPhysical",
+    nullptr,
     false,
     0,
     true);
