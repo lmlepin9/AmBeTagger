@@ -18,6 +18,7 @@ void EventAction::BeginOfEventAction(const G4Event*)
   scintillationPhotonCount_ = 0;
   cherenkovPhotonCount_ = 0;
   pmtPhotonCount_ = 0; 
+  photoelectronCount_ = 0; 
 }
 
 void EventAction::EndOfEventAction(const G4Event* event)
@@ -30,11 +31,12 @@ void EventAction::EndOfEventAction(const G4Event* event)
   G4cout << "Scintillation photons = " << scintillationPhotonCount_ << G4endl;
   G4cout << "Cherenkov photons = " << cherenkovPhotonCount_ << G4endl; 
   G4cout << "PMT plane photon = " << pmtPhotonCount_ << G4endl; 
+  G4cout << "Photoelectrons = " << photoelectronCount_ << G4endl;
 }
 
      
   runAction_->AddEventEnergyDeposit(eventEnergyDeposit_);
-  runAction_->AddEventPhotonCounts(scintillationPhotonCount_, cherenkovPhotonCount_, pmtPhotonCount_);
+  runAction_->AddEventPhotonCounts(scintillationPhotonCount_, cherenkovPhotonCount_, pmtPhotonCount_,photoelectronCount_);
 }
 
 void EventAction::AddEnergyDeposit(G4double energyDeposit)
@@ -57,6 +59,10 @@ void EventAction::AddPmtPhoton()
   ++pmtPhotonCount_;
 }
 
+void EventAction::AddPhotoelectron()
+{
+  ++photoelectronCount_ ;
+}
 
 
 

@@ -12,6 +12,26 @@
 #include "G4TrackStatus.hh"
 #include "G4VProcess.hh"
 
+#include "G4SystemOfUnits.hh"
+#include "Randomize.hh"
+
+
+// Helper Function for QE
+
+namespace
+{
+G4double PlaceholderQuantumEfficiency(G4double photonEnergy)
+{
+   if (photonEnergy < 2.48 * eV || photonEnergy > 3.10 * eV) {
+    return 0.0;
+  }
+
+  return 0.25;
+}
+}
+
+
+
 
 namespace AmBeTagger
 {
@@ -39,9 +59,18 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
     postPhysicalVolume != nullptr &&
     postPhysicalVolume->GetLogicalVolume() == pmtPlaneVolume) {
   eventAction_->AddPmtPhoton();
+
+  const G4double quantumEfficiency =
+      PlaceholderQuantumEfficiency(track->GetKineticEnergy());
+
+  if (G4UniformRand() < quantumEfficiency) {
+    eventAction_->AddPhotoelectron();
+  }
+
   track->SetTrackStatus(fStopAndKill);
   return;
-}
+  }
+
 
   if (prePhysicalVolume->GetLogicalVolume() != scoringVolume) {
     return;

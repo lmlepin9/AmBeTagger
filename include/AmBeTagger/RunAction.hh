@@ -16,7 +16,8 @@ class RunAction final : public G4UserRunAction
   void AddEventEnergyDeposit(G4double energyDeposit);
   void AddEventPhotonCounts(G4int scintillationPhotons, 
                             G4int cerenkovPhotons,
-                            G4int pmtPhotons);
+                            G4int pmtPhotons,
+                            G4int photoelectrons);
 
  private:
   G4int eventCount_ = 0;
@@ -28,5 +29,6 @@ class RunAction final : public G4UserRunAction
   G4int totalScintillationPhotonCount_ = 0;
   G4int totalCerenkovPhotonCount_ = 0;
   G4int totalPmtPhotonCount_ = 0; 
+  G4int totalPhotoelectronCount_ = 0; 
 };
 }

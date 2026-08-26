@@ -19,6 +19,8 @@ void RunAction::BeginOfRunAction(const G4Run*)
   totalScintillationPhotonCount_ = 0;
   totalCerenkovPhotonCount_ = 0;
   totalPmtPhotonCount_ = 0; 
+  totalPhotoelectronCount_ = 0; 
+
 }
 
 void RunAction::EndOfRunAction(const G4Run*)
@@ -67,6 +69,16 @@ void RunAction::EndOfRunAction(const G4Run*)
   G4cout << "Run PMT photon summary: " << G4endl;
   G4cout << " PMT photons = "
          << totalPmtPhotonCount_ << G4endl;
+  G4cout << "  photoelectrons = " << totalPhotoelectronCount_ << G4endl;
+
+
+  const G4double effectiveDetectionFraction =
+    totalPmtPhotonCount_ > 0
+        ? static_cast<G4double>(totalPhotoelectronCount_) / totalPmtPhotonCount_
+        : 0.0;
+
+  G4cout << "  photoelectrons / PMT photon = "
+        << effectiveDetectionFraction << G4endl;
 }
 
 void RunAction::AddEventEnergyDeposit(G4double energyDeposit)
@@ -94,11 +106,13 @@ void RunAction::AddEventEnergyDeposit(G4double energyDeposit)
 
 void RunAction::AddEventPhotonCounts(G4int scintillationPhotons,
                                      G4int cerenkovPhotons,
-                                     G4int pmtPhotons)
+                                     G4int pmtPhotons,
+                                     G4int photoelectrons)
 {
   totalScintillationPhotonCount_ += scintillationPhotons;
   totalCerenkovPhotonCount_ += cerenkovPhotons;
   totalPmtPhotonCount_ += pmtPhotons;
+  totalPhotoelectronCount_ += photoelectrons; 
 }
 
 
