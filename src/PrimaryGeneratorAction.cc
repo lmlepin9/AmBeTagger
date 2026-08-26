@@ -12,9 +12,9 @@ namespace AmBeTagger
 PrimaryGeneratorAction::PrimaryGeneratorAction()
     : particleGun_(new G4ParticleGun(1))
 {
-  particleGun_->SetParticleDefinition(G4Electron::Definition());
+  particleGun_->SetParticleDefinition(G4Gamma::Definition());
   particleGun_->SetParticleEnergy(1.0 * MeV);
-  particleGun_->SetParticlePosition(G4ThreeVector(0.0 * cm, 0.0 * cm, -4.0 * cm));
+  particleGun_->SetParticlePosition(G4ThreeVector(0.0 * cm, 0.0 * cm, -10.0 * cm));
   particleGun_->SetParticleMomentumDirection(G4ThreeVector(0.0, 0.0, 1.0));
 }
 

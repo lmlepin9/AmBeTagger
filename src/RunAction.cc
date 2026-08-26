@@ -1,0 +1,53 @@
+#include "AmBeTagger/RunAction.hh"
+
+#include "G4Run.hh"
+#include "G4SystemOfUnits.hh"
+#include "G4ios.hh"
+
+namespace AmBeTagger
+{
+void RunAction::BeginOfRunAction(const G4Run*)
+{
+  eventCount_ = 0;
+  zeroDepositEventCount_ = 0;
+  totalEnergyDeposit_ = 0.0;
+  minEnergyDeposit_ = 0.0;
+  maxEnergyDeposit_ = 0.0;
+}
+
+void RunAction::EndOfRunAction(const G4Run*)
+{
+  const G4double meanEnergyDeposit =
+      eventCount_ > 0 ? totalEnergyDeposit_ / eventCount_ : 0.0;
+
+  G4cout << "Run BGO energy summary:" << G4endl;
+  G4cout << "  events = " << eventCount_ << G4endl;
+  G4cout << "  zero-deposit events = " << zeroDepositEventCount_ << G4endl;
+  G4cout << "  total Edep = " << totalEnergyDeposit_ / MeV << " MeV" << G4endl;
+  G4cout << "  mean Edep = " << meanEnergyDeposit / MeV << " MeV" << G4endl;
+  G4cout << "  min Edep = " << minEnergyDeposit_ / MeV << " MeV" << G4endl;
+  G4cout << "  max Edep = " << maxEnergyDeposit_ / MeV << " MeV" << G4endl;
+}
+
+void RunAction::AddEventEnergyDeposit(G4double energyDeposit)
+{
+  if (eventCount_ == 0) {
+    minEnergyDeposit_ = energyDeposit;
+    maxEnergyDeposit_ = energyDeposit;
+  } else {
+    if (energyDeposit < minEnergyDeposit_) {
+      minEnergyDeposit_ = energyDeposit;
+    }
+    if (energyDeposit > maxEnergyDeposit_) {
+      maxEnergyDeposit_ = energyDeposit;
+    }
+  }
+
+  if (energyDeposit == 0.0) {
+    ++zeroDepositEventCount_;
+  }
+
+  totalEnergyDeposit_ += energyDeposit;
+  ++eventCount_;
+}
+}

@@ -10,11 +10,11 @@ namespace AmBeTagger
 class DetectorConstruction final : public G4VUserDetectorConstruction
 {
  public:
-  G4LogicalVolume* GetScoringVolume() const; 
     DetectorConstruction() = default;
     ~DetectorConstruction() override = default;
 
     G4VPhysicalVolume* Construct() override;
+    G4LogicalVolume* GetScoringVolume() const; 
 
   private: 
     G4LogicalVolume* scoringVolume_ = nullptr; 

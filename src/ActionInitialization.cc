@@ -1,3 +1,4 @@
+#include "AmBeTagger/RunAction.hh"
 #include "AmBeTagger/EventAction.hh"
 #include "AmBeTagger/SteppingAction.hh"
 #include "AmBeTagger/ActionInitialization.hh"
@@ -17,7 +18,10 @@ void ActionInitialization::Build() const
 {
   SetUserAction(new PrimaryGeneratorAction);
 
-  EventAction* eventAction = new EventAction;
+  RunAction* runAction = new RunAction;
+  SetUserAction(runAction);
+
+  EventAction* eventAction = new EventAction(runAction);
   SetUserAction(eventAction);
 
   SetUserAction(new SteppingAction(eventAction, detectorConstruction_));
