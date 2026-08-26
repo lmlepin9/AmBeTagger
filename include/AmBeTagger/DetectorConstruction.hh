@@ -15,8 +15,11 @@ class DetectorConstruction final : public G4VUserDetectorConstruction
 
     G4VPhysicalVolume* Construct() override;
     G4LogicalVolume* GetScoringVolume() const; 
+    G4LogicalVolume* GetPmtPlaneVolume() const;
 
   private: 
     G4LogicalVolume* scoringVolume_ = nullptr; 
+    G4LogicalVolume* pmtPlaneVolume_ = nullptr;
+
 };
 }

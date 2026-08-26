@@ -9,6 +9,7 @@
 
 #include "G4OpticalPhoton.hh"
 #include "G4Track.hh"
+#include "G4TrackStatus.hh"
 #include "G4VProcess.hh"
 
 
@@ -24,13 +25,28 @@ SteppingAction::SteppingAction(EventAction* eventAction,
 void SteppingAction::UserSteppingAction(const G4Step* step)
 {
   G4LogicalVolume* scoringVolume = detectorConstruction_->GetScoringVolume();
+  G4LogicalVolume* pmtPlaneVolume = detectorConstruction_->GetPmtPlaneVolume();
+  
+  G4Track* track = step->GetTrack();
 
-  G4VPhysicalVolume* physicalVolume =
+  G4VPhysicalVolume* prePhysicalVolume =
       step->GetPreStepPoint()->GetTouchableHandle()->GetVolume();
 
-  if (physicalVolume->GetLogicalVolume() != scoringVolume) {
+  G4VPhysicalVolume* postPhysicalVolume = 
+      step->GetPostStepPoint()->GetTouchableHandle()->GetVolume();
+
+  if (track->GetDefinition() == G4OpticalPhoton::Definition() &&
+    postPhysicalVolume != nullptr &&
+    postPhysicalVolume->GetLogicalVolume() == pmtPlaneVolume) {
+  eventAction_->AddPmtPhoton();
+  track->SetTrackStatus(fStopAndKill);
+  return;
+}
+
+  if (prePhysicalVolume->GetLogicalVolume() != scoringVolume) {
     return;
   }
+
 
   // This is the total energy, regardless of the process... 
   eventAction_->AddEnergyDeposit(step->GetTotalEnergyDeposit());

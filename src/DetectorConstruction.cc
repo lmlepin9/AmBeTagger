@@ -51,8 +51,16 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       1.0,
       0.2};
 
+  const std::vector<G4double> bgoAbsorptionLength = {
+    20.0 * cm,
+    20.0 * cm,
+    20.0 * cm};
+
+
   G4MaterialPropertiesTable* bgoMpt = new G4MaterialPropertiesTable;
 
+
+  bgoMpt->AddProperty("ABSLENGTH", photonEnergy, bgoAbsorptionLength);
   bgoMpt->AddProperty("RINDEX", photonEnergy, bgoRefractiveIndex);
   bgoMpt->AddProperty("SCINTILLATIONCOMPONENT1", photonEnergy, bgoScintillation);
 
@@ -62,6 +70,15 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   bgoMpt->AddConstProperty("SCINTILLATIONYIELD1", 1.0);
 
   bgo->SetMaterialPropertiesTable(bgoMpt);
+
+  const std::vector<G4double> airRefractiveIndex = {
+      1.0,
+      1.0,
+      1.0};
+
+  G4MaterialPropertiesTable* airMpt = new G4MaterialPropertiesTable;
+  airMpt->AddProperty("RINDEX", photonEnergy, airRefractiveIndex);
+  air->SetMaterialPropertiesTable(airMpt);
 
 
 
@@ -118,6 +135,33 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       0,
       true);
 
+constexpr G4double pmtPlaneRadius = 2.5 * cm;
+constexpr G4double pmtPlaneHalfThickness = 0.05 * mm;
+constexpr G4double pmtPlaneZ = 2.6 * cm;
+
+G4Tubs* pmtPlaneSolid = new G4Tubs(
+    "PmtPlaneSolid",
+    0.0 * cm,
+    pmtPlaneRadius,
+    pmtPlaneHalfThickness,
+    0.0 * deg,
+    360.0 * deg);
+
+pmtPlaneVolume_ = new G4LogicalVolume(
+    pmtPlaneSolid,
+    air,
+    "PmtPlaneLogical");
+
+new G4PVPlacement(
+    nullptr,
+    G4ThreeVector(0.0 * cm, 0.0 * cm, pmtPlaneZ),
+    pmtPlaneVolume_,
+    "PmtPlanePhysical",
+    worldLogical,
+    false,
+    0,
+    true);
+
   return worldPhysical;
 }
 
@@ -125,6 +169,12 @@ G4LogicalVolume* DetectorConstruction::GetScoringVolume() const
 {
     return scoringVolume_;
 }
+
+G4LogicalVolume* DetectorConstruction::GetPmtPlaneVolume() const
+{
+  return pmtPlaneVolume_;
+}
+
 
 
 }

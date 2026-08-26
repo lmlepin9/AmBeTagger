@@ -18,6 +18,7 @@ void RunAction::BeginOfRunAction(const G4Run*)
   totalEnergyDepositSquared_ = 0.0;
   totalScintillationPhotonCount_ = 0;
   totalCerenkovPhotonCount_ = 0;
+  totalPmtPhotonCount_ = 0; 
 }
 
 void RunAction::EndOfRunAction(const G4Run*)
@@ -63,6 +64,9 @@ void RunAction::EndOfRunAction(const G4Run*)
         << scintillationPhotonsPerMeV << G4endl;
   G4cout << " Cerenkov photons / MeV deposited = "
         << cerenkovPhotonsPerMeV << G4endl;
+  G4cout << "Run PMT photon summary: " << G4endl;
+  G4cout << " PMT photons = "
+         << totalPmtPhotonCount_ << G4endl;
 }
 
 void RunAction::AddEventEnergyDeposit(G4double energyDeposit)
@@ -89,10 +93,12 @@ void RunAction::AddEventEnergyDeposit(G4double energyDeposit)
 }
 
 void RunAction::AddEventPhotonCounts(G4int scintillationPhotons,
-                                     G4int cerenkovPhotons)
+                                     G4int cerenkovPhotons,
+                                     G4int pmtPhotons)
 {
   totalScintillationPhotonCount_ += scintillationPhotons;
   totalCerenkovPhotonCount_ += cerenkovPhotons;
+  totalPmtPhotonCount_ += pmtPhotons;
 }
 
 

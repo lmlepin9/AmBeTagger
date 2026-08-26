@@ -18,11 +18,13 @@ class EventAction final : public G4UserEventAction
   void AddEnergyDeposit(G4double energyDeposit);
   void AddScintillationPhoton();
   void AddCherenkovPhoton();
+  void AddPmtPhoton(); 
 
  private:
   RunAction* runAction_;
   G4double eventEnergyDeposit_ = 0.0;
   G4int scintillationPhotonCount_ = 0;
   G4int cherenkovPhotonCount_ = 0; 
+  G4int pmtPhotonCount_ = 0; 
 };
 }
