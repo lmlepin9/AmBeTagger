@@ -17,6 +17,10 @@ class WaveformBuilder final
   std::vector<G4double> Build(const std::vector<G4double>& photoelectronTimes) const;
   G4int SampleCount() const;
   G4double SampleSpacing() const;
+  G4double StartTime() const;
+  G4double EndTime() const;
+  G4double Duration() const;
+  G4double SampleTime(G4int sample) const;
 
  private:
   SinglePhotoelectronPulse singlePE_;

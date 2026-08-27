@@ -37,7 +37,7 @@ std::vector<G4double> WaveformBuilder::Build(
       waveform[sample] = G4RandGauss::shoot(0.0, noiseSigma_);
     }
 
-    const G4double time = sample * SampleSpacing();
+    const G4double time = SampleTime(sample);
     for (std::size_t i = 0; i < photoelectronTimes.size(); ++i) {
       waveform[sample] += photoelectronGains[i]
           * singlePE_.Amplitude(time - photoelectronTimes[i]);
@@ -55,6 +55,26 @@ G4int WaveformBuilder::SampleCount() const
 G4double WaveformBuilder::SampleSpacing() const
 {
   return kSampleSpacing;
+}
+
+G4double WaveformBuilder::StartTime() const
+{
+  return 0.0;
+}
+
+G4double WaveformBuilder::EndTime() const
+{
+  return SampleTime(SampleCount() - 1);
+}
+
+G4double WaveformBuilder::Duration() const
+{
+  return SampleCount() * SampleSpacing();
+}
+
+G4double WaveformBuilder::SampleTime(G4int sample) const
+{
+  return StartTime() + sample * SampleSpacing();
 }
 
 }

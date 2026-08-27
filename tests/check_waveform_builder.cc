@@ -83,6 +83,36 @@ int main()
     return 1;
   }
 
+  if (!CloseEnough(builder.StartTime(), 0.0 * ns, 1.0e-12)) {
+    std::cerr << "Start time failed: " << builder.StartTime() / ns
+              << " ns\n";
+    return 1;
+  }
+
+  if (!CloseEnough(builder.SampleTime(0), 0.0 * ns, 1.0e-12)) {
+    std::cerr << "Sample 0 time failed: " << builder.SampleTime(0) / ns
+              << " ns\n";
+    return 1;
+  }
+
+  if (!CloseEnough(builder.SampleTime(12), 24.0 * ns, 1.0e-12)) {
+    std::cerr << "Sample 12 time failed: " << builder.SampleTime(12) / ns
+              << " ns\n";
+    return 1;
+  }
+
+  if (!CloseEnough(builder.EndTime(), 2998.0 * ns, 1.0e-12)) {
+    std::cerr << "End time failed: " << builder.EndTime() / ns
+              << " ns\n";
+    return 1;
+  }
+
+  if (!CloseEnough(builder.Duration(), 3000.0 * ns, 1.0e-12)) {
+    std::cerr << "Duration failed: " << builder.Duration() / ns
+              << " ns\n";
+    return 1;
+  }
+
   const std::vector<G4double> zeroPeWaveform = builder.Build({});
 
   if (zeroPeWaveform.size() != static_cast<std::size_t>(kSampleCount)) {
@@ -214,7 +244,7 @@ int main()
   }
 
   if (!CloseEnough(endPeWaveform[1499],
-                   ExpectedPulseAmplitude(2998.0, 2974.0),
+                   ExpectedPulseAmplitude(builder.EndTime() / ns, 2974.0),
                    1.0e-12)) {
     std::cerr << "End PE sample 1499 failed: " << endPeWaveform[1499]
               << '\n';

@@ -1,9 +1,10 @@
 #include "AmBeTagger/EventAction.hh"
 #include "AmBeTagger/RunAction.hh"
+#include "AmBeTagger/WaveformBuilder.hh"
+#include "AmBeTagger/WaveformObservables.hh"
 #include "G4Event.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4ios.hh"
-#include "AmBeTagger/WaveformBuilder.hh"
 
 namespace AmBeTagger
 {
@@ -67,18 +68,14 @@ void EventAction::EndOfEventAction(const G4Event* event)
   const std::vector<G4double> waveform =
       waveformBuilder.Build(photoelectronTimes_);
 
-  G4double peakAmplitude = 0.0;
-  G4int peakSample = 0;
+  WaveformObservables observables;
+  const WaveformSummary summary =
+      observables.Analyze(waveform, waveformBuilder.SampleSpacing());
 
-  for (G4int i = 0; i < static_cast<G4int>(waveform.size()); ++i) {
-    if (waveform[i] > peakAmplitude) {
-      peakAmplitude = waveform[i];
-      peakSample = i;
-    }
-  }
-
-  G4cout << "Toy waveform peak = " << peakAmplitude
-        << " at sample " << peakSample << G4endl;
+  G4cout << "Toy waveform peak = " << summary.peakAmplitude
+         << " at sample " << summary.peakSample
+         << " time " << summary.peakTime / ns << " ns"
+         << " integral " << summary.integral / ns << G4endl;
 
 
 

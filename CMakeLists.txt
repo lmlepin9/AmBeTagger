@@ -13,6 +13,7 @@ add_executable(ambe_tagger
   src/WaveformBuilder.cc
   src/SinglePhotoelectronPulse.cc
   src/SinglePhotoelectronGain.cc
+  src/WaveformObservables.cc
 )
 
 target_compile_features(ambe_tagger PRIVATE cxx_std_17)
@@ -64,6 +65,17 @@ target_compile_features(check_single_photoelectron_gain PRIVATE cxx_std_17)
 target_include_directories(check_single_photoelectron_gain PRIVATE include)
 
 target_link_libraries(check_single_photoelectron_gain PRIVATE ${Geant4_LIBRARIES})
+
+add_executable(check_waveform_observables
+  tests/check_waveform_observables.cc
+  src/WaveformObservables.cc
+)
+
+target_compile_features(check_waveform_observables PRIVATE cxx_std_17)
+
+target_include_directories(check_waveform_observables PRIVATE include)
+
+target_link_libraries(check_waveform_observables PRIVATE ${Geant4_LIBRARIES})
 
 set(AMBETAGGER_MACROS
   macros/run_one.mac
