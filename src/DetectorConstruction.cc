@@ -15,6 +15,7 @@
 #include "G4MaterialPropertiesTable.hh"
 
 #include "G4LogicalBorderSurface.hh"
+#include "G4LogicalSkinSurface.hh"
 #include "G4OpticalSurface.hh"
 #include "G4VisAttributes.hh"
 #include <vector>
@@ -270,6 +271,60 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       whitePvcDensity,
       1);
   whitePvc->AddMaterial(nistPolyvinylChloride, 1.0);
+
+  // Bulk optical properties let photons enter PVC without NoRINDEX; the short
+  // absorption length is provisional and makes the material effectively opaque.
+  constexpr G4double whitePvcRefractiveIndex = 1.54;
+  constexpr G4double whitePvcBulkAbsorptionLength = 0.1 * mm;
+  constexpr G4double whitePvcReflectivity = 0.80;
+  const std::vector<G4double> whitePvcRefractiveIndexValues(
+      n_entries,
+      whitePvcRefractiveIndex);
+  const std::vector<G4double> whitePvcAbsorptionLengthValues(
+      n_entries,
+      whitePvcBulkAbsorptionLength);
+
+  G4MaterialPropertiesTable* whitePvcMaterialMpt =
+      new G4MaterialPropertiesTable;
+  whitePvcMaterialMpt->AddProperty(
+      "RINDEX",
+      photonEnergy,
+      whitePvcRefractiveIndexValues);
+  whitePvcMaterialMpt->AddProperty(
+      "ABSLENGTH",
+      photonEnergy,
+      whitePvcAbsorptionLengthValues);
+  whitePvc->SetMaterialPropertiesTable(whitePvcMaterialMpt);
+
+  const std::vector<G4double> whitePvcReflectivityValues(
+      n_entries,
+      whitePvcReflectivity);
+  const std::vector<G4double> whitePvcTransmittanceValues(n_entries, 0.0);
+  const std::vector<G4double> whitePvcEfficiencyValues(n_entries, 0.0);
+
+  // Surface reflectivity is an effective painted-PVC model. The 0.80 value is
+  // a provisional calibration parameter, not a measured property of this PVC.
+  G4MaterialPropertiesTable* whitePvcSurfaceMpt =
+      new G4MaterialPropertiesTable;
+  whitePvcSurfaceMpt->AddProperty(
+      "REFLECTIVITY",
+      photonEnergy,
+      whitePvcReflectivityValues);
+  whitePvcSurfaceMpt->AddProperty(
+      "TRANSMITTANCE",
+      photonEnergy,
+      whitePvcTransmittanceValues);
+  whitePvcSurfaceMpt->AddProperty(
+      "EFFICIENCY",
+      photonEnergy,
+      whitePvcEfficiencyValues);
+
+  G4OpticalSurface* whitePvcSurface =
+      new G4OpticalSurface("WhitePvcReflectiveSurface");
+  whitePvcSurface->SetType(dielectric_dielectric);
+  whitePvcSurface->SetModel(unified);
+  whitePvcSurface->SetFinish(groundfrontpainted);
+  whitePvcSurface->SetMaterialPropertiesTable(whitePvcSurfaceMpt);
 
 
   constexpr G4double worldHalfLength = 50.0 * cm;
@@ -746,6 +801,10 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       "SourcePvcHolderLogical");
   sourcePvcHolderLogical->SetVisAttributes(
       MakeVisAttributes(whitePvcColour));
+  new G4LogicalSkinSurface(
+      "SourcePvcHolderSurface",
+      sourcePvcHolderLogical,
+      whitePvcSurface);
 
   G4VPhysicalVolume* sourcePvcHolderPhysical = new G4PVPlacement(
       nullptr,
@@ -797,6 +856,10 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       "ReadoutPvcHolderLogical");
   readoutPvcHolderLogical->SetVisAttributes(
       MakeVisAttributes(whitePvcColour));
+  new G4LogicalSkinSurface(
+      "ReadoutPvcHolderSurface",
+      readoutPvcHolderLogical,
+      whitePvcSurface);
 
   G4VPhysicalVolume* readoutPvcHolderPhysical = new G4PVPlacement(
       nullptr,
@@ -837,6 +900,10 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       "OuterPvcBarrelLogical");
   outerPvcBarrelLogical->SetVisAttributes(
       MakeVisAttributes(whitePvcColour));
+  new G4LogicalSkinSurface(
+      "OuterPvcBarrelSurface",
+      outerPvcBarrelLogical,
+      whitePvcSurface);
 
   G4VPhysicalVolume* outerPvcBarrelPhysical = new G4PVPlacement(
       nullptr,
@@ -877,6 +944,10 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       "OuterPvcRearEndCapLogical");
   rearEndCapLogical->SetVisAttributes(
       MakeVisAttributes(whitePvcColour));
+  new G4LogicalSkinSurface(
+      "OuterPvcRearEndCapSurface",
+      rearEndCapLogical,
+      whitePvcSurface);
 
   new G4PVPlacement(
       nullptr,
@@ -919,6 +990,10 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       "OuterPvcFrontEndCapLogical");
   frontEndCapLogical->SetVisAttributes(
       MakeVisAttributes(whitePvcColour));
+  new G4LogicalSkinSurface(
+      "OuterPvcFrontEndCapSurface",
+      frontEndCapLogical,
+      whitePvcSurface);
 
   new G4PVPlacement(
       nullptr,

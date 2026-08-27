@@ -2,6 +2,7 @@
 
 #include "G4Colour.hh"
 #include "G4LogicalBorderSurface.hh"
+#include "G4LogicalSkinSurface.hh"
 #include "G4LogicalVolume.hh"
 #include "G4LogicalVolumeStore.hh"
 #include "G4Material.hh"
@@ -167,6 +168,58 @@ bool CheckSurfaceProperty(const G4LogicalBorderSurface* borderSurface,
   if (opticalSurface == nullptr ||
       opticalSurface->GetMaterialPropertiesTable() == nullptr) {
     std::cerr << label << " optical material properties are missing\n";
+    return false;
+  }
+
+  auto* property =
+      opticalSurface->GetMaterialPropertiesTable()->GetProperty(propertyName);
+  if (property == nullptr) {
+    std::cerr << label << " is missing " << propertyName << '\n';
+    return false;
+  }
+
+  if (!CloseEnough(property->Value(probeEnergy),
+                   expectedValue,
+                   tolerance)) {
+    std::cerr << label << ' ' << propertyName
+              << " failed: actual = " << property->Value(probeEnergy)
+              << ", expected = " << expectedValue << '\n';
+    return false;
+  }
+
+  return true;
+}
+
+const G4OpticalSurface* OpticalSurfaceFromSkinSurface(
+    const G4LogicalSkinSurface* skinSurface,
+    const std::string& label)
+{
+  if (skinSurface == nullptr || skinSurface->GetSurfaceProperty() == nullptr) {
+    std::cerr << label << " skin surface property is missing\n";
+    return nullptr;
+  }
+
+  const auto* opticalSurface =
+      dynamic_cast<const G4OpticalSurface*>(
+          skinSurface->GetSurfaceProperty());
+  if (opticalSurface == nullptr ||
+      opticalSurface->GetMaterialPropertiesTable() == nullptr) {
+    std::cerr << label << " optical material properties are missing\n";
+  }
+
+  return opticalSurface;
+}
+
+bool CheckOpticalSurfaceProperty(const G4OpticalSurface* opticalSurface,
+                                 const std::string& label,
+                                 const char* propertyName,
+                                 double probeEnergy,
+                                 double expectedValue,
+                                 double tolerance)
+{
+  if (opticalSurface == nullptr ||
+      opticalSurface->GetMaterialPropertiesTable() == nullptr) {
+    std::cerr << label << " optical surface is missing\n";
     return false;
   }
 
@@ -766,6 +819,36 @@ int main()
                    sourcePvcHolderLogical->GetMaterial()->GetDensity(),
                    1.38 * g / cm3,
                    1.0e-12 * g / cm3);
+  ok &= CheckOpticalProperty(sourcePvcHolderLogical->GetMaterial(),
+                             "RINDEX",
+                             1.771 * eV,
+                             1.54,
+                             1.0e-12);
+  ok &= CheckOpticalProperty(sourcePvcHolderLogical->GetMaterial(),
+                             "RINDEX",
+                             7.085 * eV,
+                             1.54,
+                             1.0e-12);
+  ok &= CheckOpticalProperty(sourcePvcHolderLogical->GetMaterial(),
+                             "ABSLENGTH",
+                             1.771 * eV,
+                             0.1 * mm,
+                             1.0e-12 * mm);
+  ok &= CheckOpticalProperty(sourcePvcHolderLogical->GetMaterial(),
+                             "ABSLENGTH",
+                             7.085 * eV,
+                             0.1 * mm,
+                             1.0e-12 * mm);
+  ok &= CheckOpticalProperty(worldLogical->GetMaterial(),
+                             "RINDEX",
+                             1.771 * eV,
+                             1.0,
+                             1.0e-12);
+  ok &= CheckOpticalProperty(worldLogical->GetMaterial(),
+                             "RINDEX",
+                             7.085 * eV,
+                             1.0,
+                             1.0e-12);
 
   ok &= CheckOpticalProperty(couplingLogical->GetMaterial(),
                              "RINDEX",
@@ -852,6 +935,76 @@ int main()
   ok &= CheckVisAttributes(outerPvcFrontEndCapLogical,
                            "Outer PVC front end cap",
                            G4Colour(0.96, 0.96, 0.90, 0.30));
+
+  const G4LogicalSkinSurface* sourcePvcHolderSkinSurface =
+      G4LogicalSkinSurface::GetSurface(sourcePvcHolderLogical);
+  const G4LogicalSkinSurface* readoutPvcHolderSkinSurface =
+      G4LogicalSkinSurface::GetSurface(readoutPvcHolderLogical);
+  const G4LogicalSkinSurface* outerPvcBarrelSkinSurface =
+      G4LogicalSkinSurface::GetSurface(outerPvcBarrelLogical);
+  const G4LogicalSkinSurface* outerPvcRearEndCapSkinSurface =
+      G4LogicalSkinSurface::GetSurface(outerPvcRearEndCapLogical);
+  const G4LogicalSkinSurface* outerPvcFrontEndCapSkinSurface =
+      G4LogicalSkinSurface::GetSurface(outerPvcFrontEndCapLogical);
+
+  ok &= Require(sourcePvcHolderSkinSurface != nullptr,
+                "Source PVC holder skin surface is missing");
+  ok &= Require(readoutPvcHolderSkinSurface != nullptr,
+                "Readout PVC holder skin surface is missing");
+  ok &= Require(outerPvcBarrelSkinSurface != nullptr,
+                "Outer PVC barrel skin surface is missing");
+  ok &= Require(outerPvcRearEndCapSkinSurface != nullptr,
+                "Outer PVC rear end cap skin surface is missing");
+  ok &= Require(outerPvcFrontEndCapSkinSurface != nullptr,
+                "Outer PVC front end cap skin surface is missing");
+
+  const G4OpticalSurface* whitePvcSurface = OpticalSurfaceFromSkinSurface(
+      sourcePvcHolderSkinSurface,
+      "White PVC");
+  if (whitePvcSurface != nullptr) {
+    ok &= Require(whitePvcSurface->GetType() == dielectric_dielectric,
+                  "White PVC surface should be dielectric_dielectric");
+    ok &= Require(whitePvcSurface->GetModel() == unified,
+                  "White PVC surface should use the unified model");
+    ok &= Require(whitePvcSurface->GetFinish() == groundfrontpainted,
+                  "White PVC surface should be groundfrontpainted");
+    ok &= Require(readoutPvcHolderSkinSurface->GetSurfaceProperty() ==
+                      whitePvcSurface,
+                  "Readout PVC holder should share the white PVC surface");
+    ok &= Require(outerPvcBarrelSkinSurface->GetSurfaceProperty() ==
+                      whitePvcSurface,
+                  "Outer PVC barrel should share the white PVC surface");
+    ok &= Require(outerPvcRearEndCapSkinSurface->GetSurfaceProperty() ==
+                      whitePvcSurface,
+                  "Outer PVC rear end cap should share the white PVC surface");
+    ok &= Require(outerPvcFrontEndCapSkinSurface->GetSurfaceProperty() ==
+                      whitePvcSurface,
+                  "Outer PVC front end cap should share the white PVC surface");
+    ok &= CheckOpticalSurfaceProperty(whitePvcSurface,
+                                      "White PVC skin surface",
+                                      "REFLECTIVITY",
+                                      1.771 * eV,
+                                      0.80,
+                                      1.0e-12);
+    ok &= CheckOpticalSurfaceProperty(whitePvcSurface,
+                                      "White PVC skin surface",
+                                      "REFLECTIVITY",
+                                      7.085 * eV,
+                                      0.80,
+                                      1.0e-12);
+    ok &= CheckOpticalSurfaceProperty(whitePvcSurface,
+                                      "White PVC skin surface",
+                                      "TRANSMITTANCE",
+                                      1.771 * eV,
+                                      0.0,
+                                      1.0e-12);
+    ok &= CheckOpticalSurfaceProperty(whitePvcSurface,
+                                      "White PVC skin surface",
+                                      "EFFICIENCY",
+                                      7.085 * eV,
+                                      0.0,
+                                      1.0e-12);
+  }
 
   ok &= Require(detector.GetPmtPlaneVolume() == pmtPlaneLogical,
                 "Detector should still expose the PMT plane as the readout volume");
