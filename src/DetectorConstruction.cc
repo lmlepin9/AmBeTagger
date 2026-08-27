@@ -41,6 +41,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4Material* teflon = nist->FindOrBuildMaterial("G4_TEFLON");
   G4Material* nistStainlessSteel =
       nist->FindOrBuildMaterial("G4_STAINLESS-STEEL");
+  G4Material* nistPolyvinylChloride =
+      nist->FindOrBuildMaterial("G4_POLYVINYL_CHLORIDE");
   G4Element* hydrogen = nist->FindOrBuildElement("H");
   G4Element* carbon = nist->FindOrBuildElement("C");
   G4Element* nitrogen = nist->FindOrBuildElement("N");
@@ -260,6 +262,14 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       stainlessSteelDensity,
       1);
   stainlessSteel->AddMaterial(nistStainlessSteel, 1.0);
+
+  constexpr G4double whitePvcDensity = 1.38 * g / cm3;
+
+  G4Material* whitePvc = new G4Material(
+      "WhitePVC",
+      whitePvcDensity,
+      1);
+  whitePvc->AddMaterial(nistPolyvinylChloride, 1.0);
 
 
   constexpr G4double worldHalfLength = 50.0 * cm;
@@ -695,6 +705,226 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       G4ThreeVector(0.0 * cm, 0.0 * cm, pmtBodyZ),
       pmtFoamLogical,
       "PmtFoamSupportPhysical",
+      worldLogical,
+      false,
+      0,
+      true);
+
+  const G4Colour whitePvcColour(0.96, 0.96, 0.90, 0.30);
+
+  constexpr G4double sourcePvcHolderHalfLength = 0.5 * 11.63 * mm;
+  constexpr G4double sourcePvcHolderZ =
+      sourceCapsuleZ - sourceCapsuleHalfLength - sourcePvcHolderHalfLength;
+  const std::vector<G4double> sourcePvcHolderZPlanes = {
+      -5.815 * mm,
+      -4.1921 * mm,
+      -4.185 * mm,
+      5.815 * mm};
+  const std::vector<G4double> sourcePvcHolderInnerRadii = {
+      0.0 * mm,
+      0.0 * mm,
+      7.9 * mm,
+      7.9 * mm};
+  const std::vector<G4double> sourcePvcHolderOuterRadii = {
+      sourceShieldRadius,
+      sourceShieldRadius,
+      sourceShieldRadius,
+      sourceShieldRadius};
+
+  G4Polycone* sourcePvcHolderSolid = new G4Polycone(
+      "SourcePvcHolderSolid",
+      0.0 * deg,
+      360.0 * deg,
+      static_cast<G4int>(sourcePvcHolderZPlanes.size()),
+      sourcePvcHolderZPlanes.data(),
+      sourcePvcHolderInnerRadii.data(),
+      sourcePvcHolderOuterRadii.data());
+
+  G4LogicalVolume* sourcePvcHolderLogical = new G4LogicalVolume(
+      sourcePvcHolderSolid,
+      whitePvc,
+      "SourcePvcHolderLogical");
+  sourcePvcHolderLogical->SetVisAttributes(
+      MakeVisAttributes(whitePvcColour));
+
+  G4VPhysicalVolume* sourcePvcHolderPhysical = new G4PVPlacement(
+      nullptr,
+      G4ThreeVector(0.0 * cm, 0.0 * cm, sourcePvcHolderZ),
+      sourcePvcHolderLogical,
+      "SourcePvcHolderPhysical",
+      worldLogical,
+      false,
+      0,
+      true);
+
+  constexpr G4double readoutPvcHolderHalfLength = 60.0 * mm;
+  constexpr G4double readoutPvcHolderZ =
+      pmtBodyZ + pmtBodyHalfLength + readoutPvcHolderHalfLength;
+  const std::vector<G4double> readoutPvcHolderZPlanes = {
+      -60.0 * mm,
+      -40.001 * mm,
+      -40.0 * mm,
+      -39.0 * mm,
+      -38.999 * mm,
+      60.0 * mm};
+  const std::vector<G4double> readoutPvcHolderInnerRadii = {
+      25.0 * mm,
+      25.0 * mm,
+      12.79 * mm,
+      12.79 * mm,
+      25.0 * mm,
+      25.0 * mm};
+  const std::vector<G4double> readoutPvcHolderOuterRadii = {
+      sourceShieldRadius,
+      sourceShieldRadius,
+      sourceShieldRadius,
+      sourceShieldRadius,
+      sourceShieldRadius,
+      sourceShieldRadius};
+
+  G4Polycone* readoutPvcHolderSolid = new G4Polycone(
+      "ReadoutPvcHolderSolid",
+      0.0 * deg,
+      360.0 * deg,
+      static_cast<G4int>(readoutPvcHolderZPlanes.size()),
+      readoutPvcHolderZPlanes.data(),
+      readoutPvcHolderInnerRadii.data(),
+      readoutPvcHolderOuterRadii.data());
+
+  G4LogicalVolume* readoutPvcHolderLogical = new G4LogicalVolume(
+      readoutPvcHolderSolid,
+      whitePvc,
+      "ReadoutPvcHolderLogical");
+  readoutPvcHolderLogical->SetVisAttributes(
+      MakeVisAttributes(whitePvcColour));
+
+  G4VPhysicalVolume* readoutPvcHolderPhysical = new G4PVPlacement(
+      nullptr,
+      G4ThreeVector(0.0 * cm, 0.0 * cm, readoutPvcHolderZ),
+      readoutPvcHolderLogical,
+      "ReadoutPvcHolderPhysical",
+      worldLogical,
+      false,
+      0,
+      true);
+
+  constexpr G4double outerPvcInnerRadius = sourceShieldRadius;
+  constexpr G4double outerPvcOuterRadius = 35.235 * mm;
+  constexpr G4double outerPvcBarrelHalfLength = 190.0 * mm;
+  constexpr G4double rearEndCapHalfLength = 17.365 * mm;
+  constexpr G4double rearEndCapInsertionStartZ = 2.636 * mm;
+  constexpr G4double rearEndCapFrontZ = sourcePvcHolderZ
+      - sourcePvcHolderHalfLength;
+  constexpr G4double rearEndCapZ = rearEndCapFrontZ - rearEndCapHalfLength;
+  constexpr G4double outerPvcBarrelBackZ =
+      rearEndCapZ + rearEndCapInsertionStartZ;
+  constexpr G4double outerPvcBarrelZ =
+      outerPvcBarrelBackZ + outerPvcBarrelHalfLength;
+  constexpr G4double outerPvcBarrelFrontZ =
+      outerPvcBarrelZ + outerPvcBarrelHalfLength;
+
+  G4Tubs* outerPvcBarrelSolid = new G4Tubs(
+      "OuterPvcBarrelSolid",
+      outerPvcInnerRadius,
+      outerPvcOuterRadius,
+      outerPvcBarrelHalfLength,
+      0.0 * deg,
+      360.0 * deg);
+
+  G4LogicalVolume* outerPvcBarrelLogical = new G4LogicalVolume(
+      outerPvcBarrelSolid,
+      whitePvc,
+      "OuterPvcBarrelLogical");
+  outerPvcBarrelLogical->SetVisAttributes(
+      MakeVisAttributes(whitePvcColour));
+
+  G4VPhysicalVolume* outerPvcBarrelPhysical = new G4PVPlacement(
+      nullptr,
+      G4ThreeVector(0.0 * cm, 0.0 * cm, outerPvcBarrelZ),
+      outerPvcBarrelLogical,
+      "OuterPvcBarrelPhysical",
+      worldLogical,
+      false,
+      0,
+      true);
+
+  const std::vector<G4double> rearEndCapZPlanes = {
+      -17.365 * mm,
+      2.635 * mm,
+      2.636 * mm,
+      17.365 * mm};
+  const std::vector<G4double> rearEndCapInnerRadii(
+      rearEndCapZPlanes.size(),
+      0.0 * mm);
+  const std::vector<G4double> rearEndCapOuterRadii = {
+      outerPvcOuterRadius,
+      outerPvcOuterRadius,
+      outerPvcInnerRadius - 0.025 * mm,
+      outerPvcInnerRadius - 0.025 * mm};
+
+  G4Polycone* rearEndCapSolid = new G4Polycone(
+      "OuterPvcRearEndCapSolid",
+      0.0 * deg,
+      360.0 * deg,
+      static_cast<G4int>(rearEndCapZPlanes.size()),
+      rearEndCapZPlanes.data(),
+      rearEndCapInnerRadii.data(),
+      rearEndCapOuterRadii.data());
+
+  G4LogicalVolume* rearEndCapLogical = new G4LogicalVolume(
+      rearEndCapSolid,
+      whitePvc,
+      "OuterPvcRearEndCapLogical");
+  rearEndCapLogical->SetVisAttributes(
+      MakeVisAttributes(whitePvcColour));
+
+  new G4PVPlacement(
+      nullptr,
+      G4ThreeVector(0.0 * cm, 0.0 * cm, rearEndCapZ),
+      rearEndCapLogical,
+      "OuterPvcRearEndCapPhysical",
+      worldLogical,
+      false,
+      0,
+      true);
+
+  const std::vector<G4double> frontEndCapZPlanes = {
+      -15.725 * mm,
+      -9.085 * mm,
+      -9.075 * mm,
+      15.725 * mm};
+  const std::vector<G4double> frontEndCapInnerRadii(
+      frontEndCapZPlanes.size(),
+      0.0 * mm);
+  const std::vector<G4double> frontEndCapOuterRadii = {
+      outerPvcOuterRadius,
+      outerPvcOuterRadius,
+      outerPvcOuterRadius,
+      19.575 * mm};
+  constexpr G4double frontEndCapZ =
+      outerPvcBarrelFrontZ + 15.725 * mm;
+
+  G4Polycone* frontEndCapSolid = new G4Polycone(
+      "OuterPvcFrontEndCapSolid",
+      0.0 * deg,
+      360.0 * deg,
+      static_cast<G4int>(frontEndCapZPlanes.size()),
+      frontEndCapZPlanes.data(),
+      frontEndCapInnerRadii.data(),
+      frontEndCapOuterRadii.data());
+
+  G4LogicalVolume* frontEndCapLogical = new G4LogicalVolume(
+      frontEndCapSolid,
+      whitePvc,
+      "OuterPvcFrontEndCapLogical");
+  frontEndCapLogical->SetVisAttributes(
+      MakeVisAttributes(whitePvcColour));
+
+  new G4PVPlacement(
+      nullptr,
+      G4ThreeVector(0.0 * cm, 0.0 * cm, frontEndCapZ),
+      frontEndCapLogical,
+      "OuterPvcFrontEndCapPhysical",
       worldLogical,
       false,
       0,
