@@ -295,6 +295,10 @@ int main()
 
   constexpr double kTolerance = 1.0e-9 * mm;
 
+  ok &= CheckClose("BGO inner bore radius",
+                   bgoSolid->GetInnerRadius(),
+                   1.0 * mm,
+                   kTolerance);
   ok &= CheckClose("BGO radius",
                    bgoSolid->GetOuterRadius(),
                    25.0 * mm,
@@ -463,6 +467,16 @@ int main()
 
   ok &= Require(detector.GetPmtPlaneVolume() == pmtPlaneLogical,
                 "Detector should still expose the PMT plane as the readout volume");
+
+  ok &= Require(bgoSolid->Inside(G4ThreeVector(0.5 * mm, 0.0, 0.0))
+                    == kOutside,
+                "Point inside the central BGO bore was accepted");
+  ok &= Require(bgoSolid->Inside(G4ThreeVector(1.5 * mm, 0.0, 0.0))
+                    != kOutside,
+                "Point inside the BGO annulus was rejected");
+  ok &= Require(bgoSolid->Inside(G4ThreeVector(25.5 * mm, 0.0, 0.0))
+                    == kOutside,
+                "Point outside the BGO outer radius was accepted");
 
   ok &= Require(pmtPlaneSolid->Inside(G4ThreeVector(12.49 * mm, 0.0, 0.0))
                     != kOutside,

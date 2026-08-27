@@ -263,7 +263,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
 
    constexpr G4double bgoMaxRadius = 2.5 * cm;
-   constexpr G4double bgoMinRadius = 0.0 * cm; // I need to double check the size of the extrusion, for testing I removed this. 
+   constexpr G4double bgoMinRadius = 1.0 * mm;
    constexpr G4double bgoHalfLengthZ = 2.5 * cm;
 
 
