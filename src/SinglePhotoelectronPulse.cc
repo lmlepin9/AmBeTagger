@@ -8,16 +8,19 @@ namespace AmBeTagger
 {
 namespace
 {
-constexpr G4double kAmplitude = 1.0;
-constexpr G4double kDecayTime = 25.0 * ns;
+constexpr G4double kTauRise = 1.5 * ns;
+constexpr G4double kTauFall = 5.0 * ns;
+constexpr G4double kTransitTime = 23.0 * ns;
 }
 
 G4double SinglePhotoelectronPulse::Amplitude(G4double timeAfterPe) const
 {
-  if (timeAfterPe < 0.0) {
+  const G4double pulseTime = timeAfterPe - kTransitTime;
+  if (pulseTime < 0.0) {
     return 0.0;
   }
 
-  return kAmplitude * std::exp(-timeAfterPe / kDecayTime);
+  return (1.0 - std::exp(-pulseTime / kTauRise))
+      * std::exp(-pulseTime / kTauFall);
 }
 }  // namespace AmBeTagger
