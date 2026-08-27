@@ -1,6 +1,7 @@
 #include "AmBeTagger/RunAction.hh"
 #include "AmBeTagger/EventAction.hh"
 #include "AmBeTagger/SteppingAction.hh"
+#include "AmBeTagger/TrackingAction.hh"
 #include "AmBeTagger/ActionInitialization.hh"
 #include "AmBeTagger/PrimaryGeneratorAction.hh"
 
@@ -25,5 +26,6 @@ void ActionInitialization::Build() const
   SetUserAction(eventAction);
 
   SetUserAction(new SteppingAction(eventAction, detectorConstruction_));
+  SetUserAction(new TrackingAction(100));
 }
 }

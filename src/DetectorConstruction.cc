@@ -1,5 +1,6 @@
 #include "AmBeTagger/DetectorConstruction.hh"
 #include "G4Box.hh"
+#include "G4Colour.hh"
 #include "G4Tubs.hh"
 #include "G4LogicalVolume.hh"
 #include "G4NistManager.hh"
@@ -14,7 +15,20 @@
 
 #include "G4LogicalBorderSurface.hh"
 #include "G4OpticalSurface.hh"
+#include "G4VisAttributes.hh"
 #include <vector>
+
+namespace
+{
+G4VisAttributes* MakeVisAttributes(const G4Colour& colour)
+{
+  auto* attributes = new G4VisAttributes(colour);
+  attributes->SetVisibility(true);
+  attributes->SetForceSolid(true);
+  attributes->SetForceAuxEdgeVisible(true);
+  return attributes;
+}
+}
 
 namespace AmBeTagger
 {
@@ -167,6 +181,34 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       couplingAbsorptionLength);
   opticalCoupling->SetMaterialPropertiesTable(couplingMpt);
 
+  constexpr G4double uvGlassDensity = 2.2 * g / cm3;
+
+  G4Material* pmtWindowMaterial = new G4Material(
+      "UVGlass",
+      uvGlassDensity,
+      2);
+  pmtWindowMaterial->AddElement(silicon, 1);
+  pmtWindowMaterial->AddElement(oxygen, 2);
+
+  const std::vector<G4double> pmtWindowRefractiveIndex = {
+      1.49,
+      1.49};
+
+  const std::vector<G4double> pmtWindowAbsorptionLength = {
+      10.0 * m,
+      10.0 * m};
+
+  G4MaterialPropertiesTable* pmtWindowMpt = new G4MaterialPropertiesTable;
+  pmtWindowMpt->AddProperty(
+      "RINDEX",
+      couplingPhotonEnergy,
+      pmtWindowRefractiveIndex);
+  pmtWindowMpt->AddProperty(
+      "ABSLENGTH",
+      couplingPhotonEnergy,
+      pmtWindowAbsorptionLength);
+  pmtWindowMaterial->SetMaterialPropertiesTable(pmtWindowMpt);
+
 
   constexpr G4double worldHalfLength = 50.0 * cm;
 
@@ -180,6 +222,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       worldSolid,
       air,
       "WorldLogical");
+  worldLogical->SetVisAttributes(G4VisAttributes::GetInvisible());
 
   G4VPhysicalVolume* worldPhysical = new G4PVPlacement(
     nullptr,
@@ -209,6 +252,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         bgoSolid,
         bgo,
         "bgoLogical");
+   scoringVolume_->SetVisAttributes(
+       MakeVisAttributes(G4Colour(0.05, 0.25, 1.0, 0.38)));
 
   G4VPhysicalVolume* bgoPhysical = new G4PVPlacement(
     nullptr,
@@ -263,6 +308,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       couplingSolid,
       opticalCoupling,
       "CouplingLogical");
+  couplingLogical->SetVisAttributes(
+      MakeVisAttributes(G4Colour(1.0, 0.82, 0.05, 0.55)));
 
   new G4PVPlacement(
       nullptr,
@@ -274,33 +321,66 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       0,
       true);
 
-constexpr G4double pmtPlaneRadius = 2.5 * cm;
-constexpr G4double pmtPlaneHalfThickness = 0.05 * mm;
-constexpr G4double pmtPlaneZ =
-    bgoFrontZ + 2.0 * couplingHalfThickness + pmtPlaneHalfThickness;
+  constexpr G4double pmtWindowRadius = 14.25 * mm;
+  constexpr G4double pmtWindowHalfThickness = 0.5 * mm;
+  constexpr G4double pmtWindowZ =
+      bgoFrontZ + 2.0 * couplingHalfThickness + pmtWindowHalfThickness;
 
-G4Tubs* pmtPlaneSolid = new G4Tubs(
-    "PmtPlaneSolid",
-    0.0 * cm,
-    pmtPlaneRadius,
-    pmtPlaneHalfThickness,
-    0.0 * deg,
-    360.0 * deg);
+  G4Tubs* pmtWindowSolid = new G4Tubs(
+      "PmtWindowSolid",
+      0.0 * cm,
+      pmtWindowRadius,
+      pmtWindowHalfThickness,
+      0.0 * deg,
+      360.0 * deg);
 
-pmtPlaneVolume_ = new G4LogicalVolume(
-    pmtPlaneSolid,
-    air,
-    "PmtPlaneLogical");
+  G4LogicalVolume* pmtWindowLogical = new G4LogicalVolume(
+      pmtWindowSolid,
+      pmtWindowMaterial,
+      "PmtWindowLogical");
+  pmtWindowLogical->SetVisAttributes(
+      MakeVisAttributes(G4Colour(0.0, 0.82, 0.95, 0.45)));
 
-new G4PVPlacement(
-    nullptr,
-    G4ThreeVector(0.0 * cm, 0.0 * cm, pmtPlaneZ),
-    pmtPlaneVolume_,
-    "PmtPlanePhysical",
-    worldLogical,
-    false,
-    0,
-    true);
+  new G4PVPlacement(
+      nullptr,
+      G4ThreeVector(0.0 * cm, 0.0 * cm, pmtWindowZ),
+      pmtWindowLogical,
+      "PmtWindowPhysical",
+      worldLogical,
+      false,
+      0,
+      true);
+
+  constexpr G4double pmtPlaneRadius = 12.5 * mm;
+  constexpr G4double pmtPlaneHalfThickness = 0.005 * mm;
+  constexpr G4double pmtPlaneZ =
+      bgoFrontZ + 2.0 * couplingHalfThickness
+      + 2.0 * pmtWindowHalfThickness + pmtPlaneHalfThickness;
+
+  G4Tubs* pmtPlaneSolid = new G4Tubs(
+      "PmtPlaneSolid",
+      0.0 * cm,
+      pmtPlaneRadius,
+      pmtPlaneHalfThickness,
+      0.0 * deg,
+      360.0 * deg);
+
+  pmtPlaneVolume_ = new G4LogicalVolume(
+      pmtPlaneSolid,
+      air,
+      "PmtPlaneLogical");
+  pmtPlaneVolume_->SetVisAttributes(
+      MakeVisAttributes(G4Colour(0.0, 0.95, 0.28, 0.9)));
+
+  new G4PVPlacement(
+      nullptr,
+      G4ThreeVector(0.0 * cm, 0.0 * cm, pmtPlaneZ),
+      pmtPlaneVolume_,
+      "PmtPlanePhysical",
+      worldLogical,
+      false,
+      0,
+      true);
 
   return worldPhysical;
 }
