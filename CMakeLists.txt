@@ -10,10 +10,23 @@ add_executable(ambe_tagger
   src/SteppingAction.cc
   src/RunAction.cc
   src/PmtResponse.cc
+  src/WaveformBuilder.cc
 )
+
 target_compile_features(ambe_tagger PRIVATE cxx_std_17)
 target_include_directories(ambe_tagger PRIVATE include)
 target_link_libraries(ambe_tagger PRIVATE ${Geant4_LIBRARIES})
+
+add_executable(check_pmt_response
+  tests/check_pmt_response.cc
+  src/PmtResponse.cc
+)
+
+target_compile_features(check_pmt_response PRIVATE cxx_std_17)
+
+target_include_directories(check_pmt_response PRIVATE include)
+
+target_link_libraries(check_pmt_response PRIVATE ${Geant4_LIBRARIES})
 
 set(AMBETAGGER_MACROS
   macros/run_one.mac

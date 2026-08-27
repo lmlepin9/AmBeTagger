@@ -3,6 +3,7 @@
 #include "G4Event.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4ios.hh"
+#include "AmBeTagger/WaveformBuilder.hh"
 
 namespace AmBeTagger
 {
@@ -61,6 +62,26 @@ void EventAction::EndOfEventAction(const G4Event* event)
   }
 
   G4cout << G4endl;
+
+  WaveformBuilder waveformBuilder;
+  const std::vector<G4double> waveform =
+      waveformBuilder.Build(photoelectronTimes_);
+
+  G4double peakAmplitude = 0.0;
+  G4int peakSample = 0;
+
+  for (G4int i = 0; i < static_cast<G4int>(waveform.size()); ++i) {
+    if (waveform[i] > peakAmplitude) {
+      peakAmplitude = waveform[i];
+      peakSample = i;
+    }
+  }
+
+  G4cout << "Toy waveform peak = " << peakAmplitude
+        << " at sample " << peakSample << G4endl;
+
+
+
   }
 }
 
