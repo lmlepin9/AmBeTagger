@@ -34,6 +34,38 @@ double ExpectedPulseAmplitude(double sampleTimeNs, double peTimeNs)
   return (1.0 - std::exp(-pulseTimeNs / kTauRiseNs))
       * std::exp(-pulseTimeNs / kTauFallNs);
 }
+
+bool WaveformsExactlyEqual(const std::vector<G4double>& first,
+                           const std::vector<G4double>& second)
+{
+  if (first.size() != second.size()) {
+    return false;
+  }
+
+  for (std::size_t i = 0; i < first.size(); ++i) {
+    if (first[i] != second[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool AnySampleDiffers(const std::vector<G4double>& first,
+                      const std::vector<G4double>& second)
+{
+  if (first.size() != second.size()) {
+    return true;
+  }
+
+  for (std::size_t i = 0; i < first.size(); ++i) {
+    if (first[i] != second[i]) {
+      return true;
+    }
+  }
+
+  return false;
+}
 }
 
 int main()
@@ -200,6 +232,49 @@ int main()
 
   if (CloseEnough(gainWaveform[12], meanGainSample, 1.0e-12)) {
     std::cerr << "Gain sample was not smeared away from the mean-only value\n";
+    return 1;
+  }
+
+  const AmBeTagger::WaveformBuilder stochasticBuilder(
+      kNoiseSigma, kGainMean, kGainSigma);
+  const std::vector<G4double> stochasticPeTimes = {
+      0.0 * ns,
+      20.0 * ns};
+
+  CLHEP::HepRandom::setTheSeed(24680);
+  const std::vector<G4double> firstStochasticWaveform =
+      stochasticBuilder.Build(stochasticPeTimes);
+
+  CLHEP::HepRandom::setTheSeed(24680);
+  const std::vector<G4double> repeatedStochasticWaveform =
+      stochasticBuilder.Build(stochasticPeTimes);
+
+  if (!WaveformsExactlyEqual(firstStochasticWaveform,
+                             repeatedStochasticWaveform)) {
+    std::cerr << "Full waveform reproducibility failed\n";
+    return 1;
+  }
+
+  CLHEP::HepRandom::setTheSeed(13579);
+  const std::vector<G4double> differentSeedWaveform =
+      stochasticBuilder.Build(stochasticPeTimes);
+
+  if (!AnySampleDiffers(firstStochasticWaveform, differentSeedWaveform)) {
+    std::cerr << "Different seed did not change stochastic waveform\n";
+    return 1;
+  }
+
+  CLHEP::HepRandom::setTheSeed(11223);
+  const std::vector<G4double> noisyZeroPeWaveform =
+      stochasticBuilder.Build({});
+
+  if (!AnySampleDiffers(noisyZeroPeWaveform, zeroPeWaveform)) {
+    std::cerr << "Noisy zero-PE waveform stayed all zero\n";
+    return 1;
+  }
+
+  if (!AnySampleDiffers(firstStochasticWaveform, waveform)) {
+    std::cerr << "Stochastic PE waveform matched noiseless unit-gain waveform\n";
     return 1;
   }
 
