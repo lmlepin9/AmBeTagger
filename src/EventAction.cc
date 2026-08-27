@@ -21,6 +21,7 @@ void EventAction::BeginOfEventAction(const G4Event*)
   photoelectronCount_ = 0; 
   earliestPhotoelectronTime_ = 0.0;
   sumPhotoelectronTime_ = 0.0;
+  photoelectronTimes_.clear();
 }
 
 void EventAction::EndOfEventAction(const G4Event* event)
@@ -42,6 +43,24 @@ void EventAction::EndOfEventAction(const G4Event* event)
   G4cout << "Mean PE time = "
          << (sumPhotoelectronTime_ / photoelectronCount_) / ns
          << " ns" << G4endl;
+
+  G4cout << "PE times ns = ";
+
+  const G4int maxTimesToPrint =
+      photoelectronCount_ < 5 ? photoelectronCount_ : 5;
+
+  for (G4int i = 0; i < maxTimesToPrint; ++i) {
+    G4cout << photoelectronTimes_[i] / ns;
+    if (i + 1 < maxTimesToPrint) {
+      G4cout << ", ";
+    }
+  }
+
+  if (photoelectronCount_ > maxTimesToPrint) {
+    G4cout << ", ...";
+  }
+
+  G4cout << G4endl;
   }
 }
 
@@ -80,6 +99,7 @@ void EventAction::AddPmtPhoton()
 void EventAction::AddPhotoelectron(G4double time)
 {
 
+  photoelectronTimes_.push_back(time);
   if (photoelectronCount_ == 0 || time < earliestPhotoelectronTime_) {
     earliestPhotoelectronTime_ = time;
   }

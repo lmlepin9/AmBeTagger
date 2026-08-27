@@ -2,6 +2,7 @@
 
 #include "G4UserEventAction.hh"
 #include "globals.hh"
+#include <vector> 
 
 class G4Event;
 
@@ -30,5 +31,6 @@ class EventAction final : public G4UserEventAction
   G4int photoelectronCount_ = 0; 
   G4double earliestPhotoelectronTime_ = 0.0;
   G4double sumPhotoelectronTime_ = 0.0;
+  std::vector<G4double> photoelectronTimes_;
 };
 }
