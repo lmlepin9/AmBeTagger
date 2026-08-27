@@ -179,6 +179,53 @@ int main()
     return 1;
   }
 
+  const std::vector<G4double> earlyPeWaveform =
+      builder.Build({-24.0 * ns});
+
+  if (!CloseEnough(earlyPeWaveform[0],
+                   ExpectedPulseAmplitude(0.0, -24.0),
+                   1.0e-12)) {
+    std::cerr << "Early PE sample 0 failed: " << earlyPeWaveform[0] << '\n';
+    return 1;
+  }
+
+  if (earlyPeWaveform[0] <= 0.0) {
+    std::cerr << "Early PE should leave a visible in-window tail\n";
+    return 1;
+  }
+
+  const std::vector<G4double> latePeWaveform =
+      builder.Build({3000.0 * ns});
+
+  for (G4double sample : latePeWaveform) {
+    if (!CloseEnough(sample, 0.0, 1.0e-12)) {
+      std::cerr << "Late out-of-window PE sample failed: " << sample << '\n';
+      return 1;
+    }
+  }
+
+  const std::vector<G4double> endPeWaveform =
+      builder.Build({2974.0 * ns});
+
+  if (!CloseEnough(endPeWaveform[1498], 0.0, 1.0e-12)) {
+    std::cerr << "End PE sample 1498 failed: " << endPeWaveform[1498]
+              << '\n';
+    return 1;
+  }
+
+  if (!CloseEnough(endPeWaveform[1499],
+                   ExpectedPulseAmplitude(2998.0, 2974.0),
+                   1.0e-12)) {
+    std::cerr << "End PE sample 1499 failed: " << endPeWaveform[1499]
+              << '\n';
+    return 1;
+  }
+
+  if (endPeWaveform[1499] <= 0.0) {
+    std::cerr << "End PE should contribute to the final sample\n";
+    return 1;
+  }
+
   CLHEP::HepRandom::setTheSeed(12345);
   const AmBeTagger::WaveformBuilder noisyBuilder(kNoiseSigma);
   const std::vector<G4double> noiseOnly = noisyBuilder.Build({});
