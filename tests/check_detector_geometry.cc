@@ -8,6 +8,8 @@
 #include "G4MaterialPropertiesTable.hh"
 #include "G4OpticalSurface.hh"
 #include "G4PhysicalVolumeStore.hh"
+#include "G4Polycone.hh"
+#include "G4PolyconeHistorical.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4Tubs.hh"
 #include "G4VPhysicalVolume.hh"
@@ -73,6 +75,22 @@ const G4Tubs* RequireTubs(G4LogicalVolume* logical,
   }
 
   return tubs;
+}
+
+const G4Polycone* RequirePolycone(G4LogicalVolume* logical,
+                                  const std::string& label)
+{
+  if (logical == nullptr) {
+    std::cerr << label << " logical volume is null\n";
+    return nullptr;
+  }
+
+  const auto* polycone = dynamic_cast<const G4Polycone*>(logical->GetSolid());
+  if (polycone == nullptr) {
+    std::cerr << label << " is not backed by a G4Polycone solid\n";
+  }
+
+  return polycone;
 }
 
 bool CheckMaterial(G4LogicalVolume* logical,
@@ -208,6 +226,21 @@ double FrontFaceZ(const G4VPhysicalVolume* physical, const G4Tubs* solid)
 {
   return physical->GetTranslation().z() + solid->GetZHalfLength();
 }
+
+double PolyconeBackFaceZ(const G4VPhysicalVolume* physical,
+                         const G4Polycone* solid)
+{
+  return physical->GetTranslation().z() +
+      solid->GetOriginalParameters()->Z_values[0];
+}
+
+double PolyconeFrontFaceZ(const G4VPhysicalVolume* physical,
+                          const G4Polycone* solid)
+{
+  const auto* parameters = solid->GetOriginalParameters();
+  return physical->GetTranslation().z() +
+      parameters->Z_values[parameters->Num_z_planes - 1];
+}
 }
 
 int main()
@@ -231,6 +264,12 @@ int main()
   G4LogicalVolume* pmtPlaneLogical = LogicalVolume("PmtPlaneLogical");
   G4LogicalVolume* pmtBodyLogical = LogicalVolume("PmtBodyLogical");
   G4LogicalVolume* pmtFoamLogical = LogicalVolume("PmtFoamSupportLogical");
+  G4LogicalVolume* sourceShieldLogical =
+      LogicalVolume("SourceDownstreamShieldLogical");
+  G4LogicalVolume* sourceCapsuleLogical =
+      LogicalVolume("SourceCapsuleLogical");
+  G4LogicalVolume* sourceSurroundingShieldLogical =
+      LogicalVolume("SourceSurroundingShieldLogical");
 
   G4VPhysicalVolume* bgoPhysical = PhysicalVolume("bgoPhysical");
   G4VPhysicalVolume* couplingPhysical = PhysicalVolume("CouplingPhysical");
@@ -244,6 +283,12 @@ int main()
   G4VPhysicalVolume* pmtPlanePhysical = PhysicalVolume("PmtPlanePhysical");
   G4VPhysicalVolume* pmtBodyPhysical = PhysicalVolume("PmtBodyPhysical");
   G4VPhysicalVolume* pmtFoamPhysical = PhysicalVolume("PmtFoamSupportPhysical");
+  G4VPhysicalVolume* sourceShieldPhysical =
+      PhysicalVolume("SourceDownstreamShieldPhysical");
+  G4VPhysicalVolume* sourceCapsulePhysical =
+      PhysicalVolume("SourceCapsulePhysical");
+  G4VPhysicalVolume* sourceSurroundingShieldPhysical =
+      PhysicalVolume("SourceSurroundingShieldPhysical");
 
   ok &= Require(worldLogical != nullptr, "World logical volume is missing");
   ok &= Require(bgoPhysical != nullptr, "BGO physical volume is missing");
@@ -263,6 +308,12 @@ int main()
                 "PMT body physical volume is missing");
   ok &= Require(pmtFoamPhysical != nullptr,
                 "PMT foam support physical volume is missing");
+  ok &= Require(sourceShieldPhysical != nullptr,
+                "Source downstream shield physical volume is missing");
+  ok &= Require(sourceCapsulePhysical != nullptr,
+                "Source capsule physical volume is missing");
+  ok &= Require(sourceSurroundingShieldPhysical != nullptr,
+                "Source surrounding shield physical volume is missing");
 
   if (!ok) {
     return 1;
@@ -277,6 +328,9 @@ int main()
   ok &= !pmtPlanePhysical->CheckOverlaps(1000, 0.0, false);
   ok &= !pmtBodyPhysical->CheckOverlaps(1000, 0.0, false);
   ok &= !pmtFoamPhysical->CheckOverlaps(1000, 0.0, false);
+  ok &= !sourceShieldPhysical->CheckOverlaps(1000, 0.0, false);
+  ok &= !sourceCapsulePhysical->CheckOverlaps(1000, 0.0, false);
+  ok &= !sourceSurroundingShieldPhysical->CheckOverlaps(1000, 0.0, false);
 
   const G4Tubs* bgoSolid = RequireTubs(bgoLogical, "BGO");
   const G4Tubs* couplingSolid = RequireTubs(couplingLogical, "EJ-550");
@@ -291,12 +345,21 @@ int main()
   const G4Tubs* pmtBodySolid = RequireTubs(pmtBodyLogical, "PMT body");
   const G4Tubs* pmtFoamSolid =
       RequireTubs(pmtFoamLogical, "PMT foam support");
+  const G4Tubs* sourceShieldSolid =
+      RequireTubs(sourceShieldLogical, "Source downstream shield");
+  const G4Polycone* sourceCapsuleSolid =
+      RequirePolycone(sourceCapsuleLogical, "Source capsule");
+  const G4Tubs* sourceSurroundingShieldSolid =
+      RequireTubs(sourceSurroundingShieldLogical,
+                  "Source surrounding shield");
 
   if (bgoSolid == nullptr || couplingSolid == nullptr ||
       wrapBarrelSolid == nullptr || wrapBackCapSolid == nullptr ||
       wrapFrontCapSolid == nullptr ||
       pmtWindowSolid == nullptr || pmtPlaneSolid == nullptr ||
-      pmtBodySolid == nullptr || pmtFoamSolid == nullptr) {
+      pmtBodySolid == nullptr || pmtFoamSolid == nullptr ||
+      sourceShieldSolid == nullptr || sourceCapsuleSolid == nullptr ||
+      sourceSurroundingShieldSolid == nullptr) {
     return 1;
   }
 
@@ -390,6 +453,53 @@ int main()
                    2.0 * pmtFoamSolid->GetZHalfLength(),
                    100.0 * mm,
                    kTolerance);
+  ok &= CheckClose("Source downstream shield radius",
+                   sourceShieldSolid->GetOuterRadius(),
+                   26.025 * mm,
+                   kTolerance);
+  ok &= CheckClose("Source downstream shield full thickness",
+                   2.0 * sourceShieldSolid->GetZHalfLength(),
+                   11.63 * mm,
+                   kTolerance);
+  ok &= CheckClose("Source surrounding shield inner radius",
+                   sourceSurroundingShieldSolid->GetInnerRadius(),
+                   8.0 * mm,
+                   kTolerance);
+  ok &= CheckClose("Source surrounding shield outer radius",
+                   sourceSurroundingShieldSolid->GetOuterRadius(),
+                   sourceShieldSolid->GetOuterRadius(),
+                   kTolerance);
+  ok &= CheckClose("Source surrounding shield full length",
+                   2.0 * sourceSurroundingShieldSolid->GetZHalfLength(),
+                   10.0 * mm,
+                   kTolerance);
+
+  const auto* capsuleParameters = sourceCapsuleSolid->GetOriginalParameters();
+  ok &= Require(capsuleParameters->Num_z_planes == 6,
+                "Source capsule should have six z planes");
+  if (capsuleParameters->Num_z_planes == 6) {
+    const double expectedCapsuleZ[] = {
+        -5.0 * mm, -4.0 * mm, -3.9999 * mm,
+        3.9999 * mm, 4.0 * mm, 5.0 * mm};
+    const double expectedCapsuleRmin[] = {
+        0.0 * mm, 0.0 * mm, 6.8 * mm,
+        6.8 * mm, 0.0 * mm, 0.0 * mm};
+
+    for (G4int index = 0; index < 6; ++index) {
+      ok &= CheckClose("Source capsule z plane",
+                       capsuleParameters->Z_values[index],
+                       expectedCapsuleZ[index],
+                       kTolerance);
+      ok &= CheckClose("Source capsule inner radius",
+                       capsuleParameters->Rmin[index],
+                       expectedCapsuleRmin[index],
+                       kTolerance);
+      ok &= CheckClose("Source capsule outer radius",
+                       capsuleParameters->Rmax[index],
+                       7.8 * mm,
+                       kTolerance);
+    }
+  }
 
   ok &= CheckClose("BGO to EJ-550 contact",
                    BackFaceZ(couplingPhysical, couplingSolid),
@@ -423,6 +533,26 @@ int main()
                    FrontFaceZ(pmtFoamPhysical, pmtFoamSolid),
                    FrontFaceZ(pmtBodyPhysical, pmtBodySolid),
                    kTolerance);
+  ok &= CheckClose("Source downstream shield to PTFE back cap contact",
+                   FrontFaceZ(sourceShieldPhysical, sourceShieldSolid),
+                   BackFaceZ(wrapBackCapPhysical, wrapBackCapSolid),
+                   kTolerance);
+  ok &= CheckClose("Source capsule to downstream shield contact",
+                   PolyconeFrontFaceZ(sourceCapsulePhysical,
+                                      sourceCapsuleSolid),
+                   BackFaceZ(sourceShieldPhysical, sourceShieldSolid),
+                   kTolerance);
+  ok &= CheckClose("Source surrounding shield to downstream shield contact",
+                   FrontFaceZ(sourceSurroundingShieldPhysical,
+                              sourceSurroundingShieldSolid),
+                   BackFaceZ(sourceShieldPhysical, sourceShieldSolid),
+                   kTolerance);
+  ok &= CheckClose("Source capsule and surrounding shield back face alignment",
+                   PolyconeBackFaceZ(sourceCapsulePhysical,
+                                     sourceCapsuleSolid),
+                   BackFaceZ(sourceSurroundingShieldPhysical,
+                             sourceSurroundingShieldSolid),
+                   kTolerance);
 
   ok &= CheckMaterial(bgoLogical, "BGO", "BGO");
   ok &= CheckMaterial(couplingLogical, "EJ-550", "EJ550OpticalGrease");
@@ -433,6 +563,19 @@ int main()
   ok &= CheckMaterial(pmtPlaneLogical, "PMT plane", "G4_AIR");
   ok &= CheckMaterial(pmtBodyLogical, "PMT body", "BorosilicateGlass");
   ok &= CheckMaterial(pmtFoamLogical, "PMT foam support", "PolyurethaneFoam");
+  ok &= CheckMaterial(sourceShieldLogical,
+                      "Source downstream shield",
+                      "StainlessSteel");
+  ok &= CheckMaterial(sourceCapsuleLogical,
+                      "Source capsule",
+                      "StainlessSteel");
+  ok &= CheckMaterial(sourceSurroundingShieldLogical,
+                      "Source surrounding shield",
+                      "StainlessSteel");
+  ok &= CheckClose("Stainless steel density",
+                   sourceShieldLogical->GetMaterial()->GetDensity(),
+                   8.0 * g / cm3,
+                   1.0e-12 * g / cm3);
 
   ok &= CheckOpticalProperty(couplingLogical->GetMaterial(),
                              "RINDEX",
@@ -495,6 +638,15 @@ int main()
   ok &= CheckVisAttributes(pmtFoamLogical,
                            "PMT foam support",
                            G4Colour(0.04, 0.045, 0.055, 0.28));
+  ok &= CheckVisAttributes(sourceShieldLogical,
+                           "Source downstream shield",
+                           G4Colour(0.58, 0.60, 0.63, 0.76));
+  ok &= CheckVisAttributes(sourceCapsuleLogical,
+                           "Source capsule",
+                           G4Colour(0.58, 0.60, 0.63, 0.76));
+  ok &= CheckVisAttributes(sourceSurroundingShieldLogical,
+                           "Source surrounding shield",
+                           G4Colour(0.58, 0.60, 0.63, 0.76));
 
   ok &= Require(detector.GetPmtPlaneVolume() == pmtPlaneLogical,
                 "Detector should still expose the PMT plane as the readout volume");
@@ -524,6 +676,26 @@ int main()
   ok &= Require(pmtFoamSolid->Inside(G4ThreeVector(26.5 * mm, 0.0, 0.0))
                     == kOutside,
                 "Point outside the PMT foam support was accepted");
+  ok &= Require(sourceCapsuleSolid->Inside(G4ThreeVector(7.7 * mm, 0.0,
+                                                         0.0))
+                    != kOutside,
+                "Point inside the source capsule end cap was rejected");
+  ok &= Require(sourceCapsuleSolid->Inside(G4ThreeVector(6.7 * mm, 0.0,
+                                                         -3.0 * mm))
+                    == kOutside,
+                "Point inside the source capsule hollow region was accepted");
+  ok &= Require(sourceCapsuleSolid->Inside(G4ThreeVector(7.2 * mm, 0.0,
+                                                         -3.0 * mm))
+                    != kOutside,
+                "Point inside the source capsule shell was rejected");
+  ok &= Require(sourceSurroundingShieldSolid->Inside(
+                    G4ThreeVector(7.9 * mm, 0.0, 0.0))
+                    == kOutside,
+                "Point inside the source surrounding shield bore was accepted");
+  ok &= Require(sourceSurroundingShieldSolid->Inside(
+                    G4ThreeVector(20.0 * mm, 0.0, 0.0))
+                    != kOutside,
+                "Point inside the source surrounding shield annulus was rejected");
 
   const auto* barrelWrapSurface =
       G4LogicalBorderSurface::GetSurface(bgoPhysical, wrapBarrelPhysical);

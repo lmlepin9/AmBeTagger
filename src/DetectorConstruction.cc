@@ -1,6 +1,7 @@
 #include "AmBeTagger/DetectorConstruction.hh"
 #include "G4Box.hh"
 #include "G4Colour.hh"
+#include "G4Polycone.hh"
 #include "G4Tubs.hh"
 #include "G4LogicalVolume.hh"
 #include "G4NistManager.hh"
@@ -38,6 +39,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   G4Material* air = nist->FindOrBuildMaterial("G4_AIR");
   G4Material* teflon = nist->FindOrBuildMaterial("G4_TEFLON");
+  G4Material* nistStainlessSteel =
+      nist->FindOrBuildMaterial("G4_STAINLESS-STEEL");
   G4Element* hydrogen = nist->FindOrBuildElement("H");
   G4Element* carbon = nist->FindOrBuildElement("C");
   G4Element* nitrogen = nist->FindOrBuildElement("N");
@@ -250,6 +253,14 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   polyurethaneFoam->AddElement(nitrogen, 0.060);
   polyurethaneFoam->AddElement(oxygen, 0.250);
 
+  constexpr G4double stainlessSteelDensity = 8.0 * g / cm3;
+
+  G4Material* stainlessSteel = new G4Material(
+      "StainlessSteel",
+      stainlessSteelDensity,
+      1);
+  stainlessSteel->AddMaterial(nistStainlessSteel, 1.0);
+
 
   constexpr G4double worldHalfLength = 50.0 * cm;
 
@@ -305,6 +316,121 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     false,
     0,
     true);
+
+  const G4Colour stainlessSteelColour(0.58, 0.60, 0.63, 0.76);
+
+  constexpr G4double sourceShieldRadius = 26.025 * mm;
+  constexpr G4double sourceShieldHalfThickness = 0.5 * 11.63 * mm;
+  constexpr G4double sourceCapsuleOuterRadius = 7.8 * mm;
+  constexpr G4double sourceCapsuleInnerRadius = 6.8 * mm;
+  constexpr G4double sourceCapsuleHalfLength = 5.0 * mm;
+  constexpr G4double sourceSurroundingShieldInnerRadius = 8.0 * mm;
+  constexpr G4double sourceShieldFrontZ =
+      -bgoHalfLengthZ - 0.25 * mm;
+  constexpr G4double sourceShieldZ =
+      sourceShieldFrontZ - sourceShieldHalfThickness;
+  constexpr G4double sourceShieldBackZ =
+      sourceShieldZ - sourceShieldHalfThickness;
+  constexpr G4double sourceCapsuleZ =
+      sourceShieldBackZ - sourceCapsuleHalfLength;
+
+  G4Tubs* sourceShieldSolid = new G4Tubs(
+      "SourceDownstreamShieldSolid",
+      0.0 * cm,
+      sourceShieldRadius,
+      sourceShieldHalfThickness,
+      0.0 * deg,
+      360.0 * deg);
+
+  G4LogicalVolume* sourceShieldLogical = new G4LogicalVolume(
+      sourceShieldSolid,
+      stainlessSteel,
+      "SourceDownstreamShieldLogical");
+  sourceShieldLogical->SetVisAttributes(
+      MakeVisAttributes(stainlessSteelColour));
+
+  new G4PVPlacement(
+      nullptr,
+      G4ThreeVector(0.0 * cm, 0.0 * cm, sourceShieldZ),
+      sourceShieldLogical,
+      "SourceDownstreamShieldPhysical",
+      worldLogical,
+      false,
+      0,
+      true);
+
+  const std::vector<G4double> capsuleZPlanes = {
+      -5.0 * mm,
+      -4.0 * mm,
+      -3.9999 * mm,
+      3.9999 * mm,
+      4.0 * mm,
+      5.0 * mm};
+  const std::vector<G4double> capsuleInnerRadii = {
+      0.0 * mm,
+      0.0 * mm,
+      sourceCapsuleInnerRadius,
+      sourceCapsuleInnerRadius,
+      0.0 * mm,
+      0.0 * mm};
+  const std::vector<G4double> capsuleOuterRadii = {
+      sourceCapsuleOuterRadius,
+      sourceCapsuleOuterRadius,
+      sourceCapsuleOuterRadius,
+      sourceCapsuleOuterRadius,
+      sourceCapsuleOuterRadius,
+      sourceCapsuleOuterRadius};
+
+  G4Polycone* sourceCapsuleSolid = new G4Polycone(
+      "SourceCapsuleSolid",
+      0.0 * deg,
+      360.0 * deg,
+      static_cast<G4int>(capsuleZPlanes.size()),
+      capsuleZPlanes.data(),
+      capsuleInnerRadii.data(),
+      capsuleOuterRadii.data());
+
+  G4LogicalVolume* sourceCapsuleLogical = new G4LogicalVolume(
+      sourceCapsuleSolid,
+      stainlessSteel,
+      "SourceCapsuleLogical");
+  sourceCapsuleLogical->SetVisAttributes(
+      MakeVisAttributes(stainlessSteelColour));
+
+  new G4PVPlacement(
+      nullptr,
+      G4ThreeVector(0.0 * cm, 0.0 * cm, sourceCapsuleZ),
+      sourceCapsuleLogical,
+      "SourceCapsulePhysical",
+      worldLogical,
+      false,
+      0,
+      true);
+
+  G4Tubs* sourceSurroundingShieldSolid = new G4Tubs(
+      "SourceSurroundingShieldSolid",
+      sourceSurroundingShieldInnerRadius,
+      sourceShieldRadius,
+      sourceCapsuleHalfLength,
+      0.0 * deg,
+      360.0 * deg);
+
+  G4LogicalVolume* sourceSurroundingShieldLogical = new G4LogicalVolume(
+      sourceSurroundingShieldSolid,
+      stainlessSteel,
+      "SourceSurroundingShieldLogical");
+  sourceSurroundingShieldLogical->SetVisAttributes(
+      MakeVisAttributes(stainlessSteelColour));
+
+  new G4PVPlacement(
+      nullptr,
+      G4ThreeVector(0.0 * cm, 0.0 * cm, sourceCapsuleZ),
+      sourceSurroundingShieldLogical,
+      "SourceSurroundingShieldPhysical",
+      worldLogical,
+      false,
+      0,
+      true);
 
 
   
