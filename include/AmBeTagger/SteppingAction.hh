@@ -20,7 +20,7 @@ class SteppingAction final : public G4UserSteppingAction
 
  private:
   EventAction* eventAction_;
-  PmtResponse* pmtResponse_;
+  PmtResponse pmtResponse_;
   const DetectorConstruction* detectorConstruction_;
 };
 }

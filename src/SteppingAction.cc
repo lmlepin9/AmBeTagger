@@ -48,7 +48,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
     postPhysicalVolume->GetLogicalVolume() == pmtPlaneVolume) {
   eventAction_->AddPmtPhoton();
 
-  if (pmtResponse_->ProducesPhotoelectron(track->GetKineticEnergy())) {
+  if (pmtResponse_.ProducesPhotoelectron(track->GetKineticEnergy())) {
   eventAction_->AddPhotoelectron(track->GetGlobalTime());
   }
 

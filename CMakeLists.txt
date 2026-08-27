@@ -11,6 +11,7 @@ add_executable(ambe_tagger
   src/RunAction.cc
   src/PmtResponse.cc
   src/WaveformBuilder.cc
+  src/SinglePhotoelectronPulse.cc
 )
 
 target_compile_features(ambe_tagger PRIVATE cxx_std_17)
@@ -27,6 +28,29 @@ target_compile_features(check_pmt_response PRIVATE cxx_std_17)
 target_include_directories(check_pmt_response PRIVATE include)
 
 target_link_libraries(check_pmt_response PRIVATE ${Geant4_LIBRARIES})
+
+add_executable(check_waveform_builder
+  tests/check_waveform_builder.cc
+  src/WaveformBuilder.cc
+  src/SinglePhotoelectronPulse.cc
+)
+
+target_compile_features(check_waveform_builder PRIVATE cxx_std_17)
+
+target_include_directories(check_waveform_builder PRIVATE include)
+
+target_link_libraries(check_waveform_builder PRIVATE ${Geant4_LIBRARIES})
+
+add_executable(check_single_photoelectron_pulse
+  tests/check_single_photoelectron_pulse.cc
+  src/SinglePhotoelectronPulse.cc
+)
+
+target_compile_features(check_single_photoelectron_pulse PRIVATE cxx_std_17)
+
+target_include_directories(check_single_photoelectron_pulse PRIVATE include)
+
+target_link_libraries(check_single_photoelectron_pulse PRIVATE ${Geant4_LIBRARIES})
 
 set(AMBETAGGER_MACROS
   macros/run_one.mac
