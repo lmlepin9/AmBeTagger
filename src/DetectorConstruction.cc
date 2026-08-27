@@ -41,6 +41,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4Element* bismuth = nist->FindOrBuildElement("Bi");
   G4Element* germanium = nist->FindOrBuildElement("Ge");
   G4Element* oxygen = nist->FindOrBuildElement("O");
+  G4Element* boron = nist->FindOrBuildElement("B");
+  G4Element* sodium = nist->FindOrBuildElement("Na");
+  G4Element* aluminum = nist->FindOrBuildElement("Al");
 
   constexpr G4double bgoDensity = 7.13 * g / cm3; 
 
@@ -209,6 +212,29 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       couplingPhotonEnergy,
       pmtWindowAbsorptionLength);
   pmtWindowMaterial->SetMaterialPropertiesTable(pmtWindowMpt);
+
+  constexpr G4double borosilicateDensity = 2.23 * g / cm3;
+
+  G4Material* pmtBodyMaterial = new G4Material(
+      "BorosilicateGlass",
+      borosilicateDensity,
+      5);
+  pmtBodyMaterial->AddElement(oxygen, 0.539);
+  pmtBodyMaterial->AddElement(silicon, 0.377);
+  pmtBodyMaterial->AddElement(boron, 0.040);
+  pmtBodyMaterial->AddElement(sodium, 0.030);
+  pmtBodyMaterial->AddElement(aluminum, 0.014);
+
+  G4MaterialPropertiesTable* pmtBodyMpt = new G4MaterialPropertiesTable;
+  pmtBodyMpt->AddProperty(
+      "RINDEX",
+      couplingPhotonEnergy,
+      pmtWindowRefractiveIndex);
+  pmtBodyMpt->AddProperty(
+      "ABSLENGTH",
+      couplingPhotonEnergy,
+      pmtWindowAbsorptionLength);
+  pmtBodyMaterial->SetMaterialPropertiesTable(pmtBodyMpt);
 
 
   constexpr G4double worldHalfLength = 50.0 * cm;
@@ -471,6 +497,36 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       G4ThreeVector(0.0 * cm, 0.0 * cm, pmtPlaneZ),
       pmtPlaneVolume_,
       "PmtPlanePhysical",
+      worldLogical,
+      false,
+      0,
+      true);
+
+  constexpr G4double pmtBodyRadius = 12.25 * mm;
+  constexpr G4double pmtBodyHalfLength = 50.0 * mm;
+  constexpr G4double pmtBodyZ =
+      pmtPlaneZ + pmtPlaneHalfThickness + pmtBodyHalfLength;
+
+  G4Tubs* pmtBodySolid = new G4Tubs(
+      "PmtBodySolid",
+      0.0 * cm,
+      pmtBodyRadius,
+      pmtBodyHalfLength,
+      0.0 * deg,
+      360.0 * deg);
+
+  G4LogicalVolume* pmtBodyLogical = new G4LogicalVolume(
+      pmtBodySolid,
+      pmtBodyMaterial,
+      "PmtBodyLogical");
+  pmtBodyLogical->SetVisAttributes(
+      MakeVisAttributes(G4Colour(0.18, 0.22, 0.28, 0.42)));
+
+  new G4PVPlacement(
+      nullptr,
+      G4ThreeVector(0.0 * cm, 0.0 * cm, pmtBodyZ),
+      pmtBodyLogical,
+      "PmtBodyPhysical",
       worldLogical,
       false,
       0,

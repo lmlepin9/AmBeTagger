@@ -229,6 +229,7 @@ int main()
       LogicalVolume("BgoTeflonFrontCapLogical");
   G4LogicalVolume* pmtWindowLogical = LogicalVolume("PmtWindowLogical");
   G4LogicalVolume* pmtPlaneLogical = LogicalVolume("PmtPlaneLogical");
+  G4LogicalVolume* pmtBodyLogical = LogicalVolume("PmtBodyLogical");
 
   G4VPhysicalVolume* bgoPhysical = PhysicalVolume("bgoPhysical");
   G4VPhysicalVolume* couplingPhysical = PhysicalVolume("CouplingPhysical");
@@ -240,6 +241,7 @@ int main()
       PhysicalVolume("BgoTeflonFrontCapPhysical");
   G4VPhysicalVolume* pmtWindowPhysical = PhysicalVolume("PmtWindowPhysical");
   G4VPhysicalVolume* pmtPlanePhysical = PhysicalVolume("PmtPlanePhysical");
+  G4VPhysicalVolume* pmtBodyPhysical = PhysicalVolume("PmtBodyPhysical");
 
   ok &= Require(worldLogical != nullptr, "World logical volume is missing");
   ok &= Require(bgoPhysical != nullptr, "BGO physical volume is missing");
@@ -255,6 +257,8 @@ int main()
                 "PMT window physical volume is missing");
   ok &= Require(pmtPlanePhysical != nullptr,
                 "PMT plane physical volume is missing");
+  ok &= Require(pmtBodyPhysical != nullptr,
+                "PMT body physical volume is missing");
 
   if (!ok) {
     return 1;
@@ -267,6 +271,7 @@ int main()
   ok &= !wrapFrontCapPhysical->CheckOverlaps(1000, 0.0, false);
   ok &= !pmtWindowPhysical->CheckOverlaps(1000, 0.0, false);
   ok &= !pmtPlanePhysical->CheckOverlaps(1000, 0.0, false);
+  ok &= !pmtBodyPhysical->CheckOverlaps(1000, 0.0, false);
 
   const G4Tubs* bgoSolid = RequireTubs(bgoLogical, "BGO");
   const G4Tubs* couplingSolid = RequireTubs(couplingLogical, "EJ-550");
@@ -278,11 +283,13 @@ int main()
       RequireTubs(wrapFrontCapLogical, "PTFE front cap");
   const G4Tubs* pmtWindowSolid = RequireTubs(pmtWindowLogical, "PMT window");
   const G4Tubs* pmtPlaneSolid = RequireTubs(pmtPlaneLogical, "PMT plane");
+  const G4Tubs* pmtBodySolid = RequireTubs(pmtBodyLogical, "PMT body");
 
   if (bgoSolid == nullptr || couplingSolid == nullptr ||
       wrapBarrelSolid == nullptr || wrapBackCapSolid == nullptr ||
       wrapFrontCapSolid == nullptr ||
-      pmtWindowSolid == nullptr || pmtPlaneSolid == nullptr) {
+      pmtWindowSolid == nullptr || pmtPlaneSolid == nullptr ||
+      pmtBodySolid == nullptr) {
     return 1;
   }
 
@@ -352,6 +359,14 @@ int main()
                    2.0 * pmtPlaneSolid->GetZHalfLength(),
                    0.01 * mm,
                    kTolerance);
+  ok &= CheckClose("PMT body radius",
+                   pmtBodySolid->GetOuterRadius(),
+                   12.25 * mm,
+                   kTolerance);
+  ok &= CheckClose("PMT body full length",
+                   2.0 * pmtBodySolid->GetZHalfLength(),
+                   100.0 * mm,
+                   kTolerance);
 
   ok &= CheckClose("BGO to EJ-550 contact",
                    BackFaceZ(couplingPhysical, couplingSolid),
@@ -373,6 +388,10 @@ int main()
                    BackFaceZ(pmtPlanePhysical, pmtPlaneSolid),
                    FrontFaceZ(pmtWindowPhysical, pmtWindowSolid),
                    kTolerance);
+  ok &= CheckClose("PMT plane to PMT body contact",
+                   BackFaceZ(pmtBodyPhysical, pmtBodySolid),
+                   FrontFaceZ(pmtPlanePhysical, pmtPlaneSolid),
+                   kTolerance);
 
   ok &= CheckMaterial(bgoLogical, "BGO", "BGO");
   ok &= CheckMaterial(couplingLogical, "EJ-550", "EJ550OpticalGrease");
@@ -381,6 +400,7 @@ int main()
   ok &= CheckMaterial(wrapFrontCapLogical, "PTFE front cap", "G4_TEFLON");
   ok &= CheckMaterial(pmtWindowLogical, "PMT window", "UVGlass");
   ok &= CheckMaterial(pmtPlaneLogical, "PMT plane", "G4_AIR");
+  ok &= CheckMaterial(pmtBodyLogical, "PMT body", "BorosilicateGlass");
 
   ok &= CheckOpticalProperty(couplingLogical->GetMaterial(),
                              "RINDEX",
@@ -398,6 +418,16 @@ int main()
                              1.49,
                              1.0e-12);
   ok &= CheckOpticalProperty(pmtWindowLogical->GetMaterial(),
+                             "ABSLENGTH",
+                             3.0 * eV,
+                             10.0 * m,
+                             1.0e-9 * m);
+  ok &= CheckOpticalProperty(pmtBodyLogical->GetMaterial(),
+                             "RINDEX",
+                             3.0 * eV,
+                             1.49,
+                             1.0e-12);
+  ok &= CheckOpticalProperty(pmtBodyLogical->GetMaterial(),
                              "ABSLENGTH",
                              3.0 * eV,
                              10.0 * m,
@@ -427,6 +457,12 @@ int main()
   ok &= CheckVisAttributes(pmtPlaneLogical,
                            "PMT plane",
                            G4Colour(0.0, 0.95, 0.28, 0.9));
+  ok &= CheckVisAttributes(pmtBodyLogical,
+                           "PMT body",
+                           G4Colour(0.18, 0.22, 0.28, 0.42));
+
+  ok &= Require(detector.GetPmtPlaneVolume() == pmtPlaneLogical,
+                "Detector should still expose the PMT plane as the readout volume");
 
   ok &= Require(pmtPlaneSolid->Inside(G4ThreeVector(12.49 * mm, 0.0, 0.0))
                     != kOutside,
