@@ -37,6 +37,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4NistManager* nist = G4NistManager::Instance();
 
   G4Material* air = nist->FindOrBuildMaterial("G4_AIR");
+  G4Material* teflon = nist->FindOrBuildMaterial("G4_TEFLON");
   G4Element* bismuth = nist->FindOrBuildElement("Bi");
   G4Element* germanium = nist->FindOrBuildElement("Ge");
   G4Element* oxygen = nist->FindOrBuildElement("O");
@@ -284,14 +285,108 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   wrapSurface->SetModel(glisur);
   wrapSurface->SetMaterialPropertiesTable(wrapMpt);
 
+  constexpr G4double wrapThickness = 0.25 * mm;
+  constexpr G4double wrapOuterRadius = bgoMaxRadius + wrapThickness;
+  constexpr G4double wrapHalfThickness = 0.5 * wrapThickness;
+  constexpr G4double pmtWindowRadius = 14.25 * mm;
+
+  G4Tubs* wrapBarrelSolid = new G4Tubs(
+      "BgoTeflonBarrelWrapSolid",
+      bgoMaxRadius,
+      wrapOuterRadius,
+      bgoHalfLengthZ,
+      0.0 * deg,
+      360.0 * deg);
+
+  G4LogicalVolume* wrapBarrelLogical = new G4LogicalVolume(
+      wrapBarrelSolid,
+      teflon,
+      "BgoTeflonBarrelWrapLogical");
+  wrapBarrelLogical->SetVisAttributes(
+      MakeVisAttributes(G4Colour(0.92, 0.92, 0.86, 0.72)));
+
+  G4VPhysicalVolume* wrapBarrelPhysical = new G4PVPlacement(
+      nullptr,
+      G4ThreeVector{},
+      wrapBarrelLogical,
+      "BgoTeflonBarrelWrapPhysical",
+      worldLogical,
+      false,
+      0,
+      true);
+
+  G4Tubs* wrapBackCapSolid = new G4Tubs(
+      "BgoTeflonBackCapSolid",
+      0.0 * cm,
+      wrapOuterRadius,
+      wrapHalfThickness,
+      0.0 * deg,
+      360.0 * deg);
+
+  G4LogicalVolume* wrapBackCapLogical = new G4LogicalVolume(
+      wrapBackCapSolid,
+      teflon,
+      "BgoTeflonBackCapLogical");
+  wrapBackCapLogical->SetVisAttributes(
+      MakeVisAttributes(G4Colour(0.92, 0.92, 0.86, 0.72)));
+
+  G4VPhysicalVolume* wrapBackCapPhysical = new G4PVPlacement(
+      nullptr,
+      G4ThreeVector(0.0 * cm, 0.0 * cm,
+                    -bgoHalfLengthZ - wrapHalfThickness),
+      wrapBackCapLogical,
+      "BgoTeflonBackCapPhysical",
+      worldLogical,
+      false,
+      0,
+      true);
+
+  G4Tubs* wrapFrontCapSolid = new G4Tubs(
+      "BgoTeflonFrontCapSolid",
+      pmtWindowRadius,
+      wrapOuterRadius,
+      wrapHalfThickness,
+      0.0 * deg,
+      360.0 * deg);
+
+  G4LogicalVolume* wrapFrontCapLogical = new G4LogicalVolume(
+      wrapFrontCapSolid,
+      teflon,
+      "BgoTeflonFrontCapLogical");
+  wrapFrontCapLogical->SetVisAttributes(
+      MakeVisAttributes(G4Colour(0.92, 0.92, 0.86, 0.72)));
+
+  G4VPhysicalVolume* wrapFrontCapPhysical = new G4PVPlacement(
+      nullptr,
+      G4ThreeVector(0.0 * cm, 0.0 * cm,
+                    bgoHalfLengthZ + wrapHalfThickness),
+      wrapFrontCapLogical,
+      "BgoTeflonFrontCapPhysical",
+      worldLogical,
+      false,
+      0,
+      true);
+
   new G4LogicalBorderSurface(
-      "BgoToAirWrapSurface",
+      "BgoToTeflonBarrelWrapSurface",
       bgoPhysical,
-      worldPhysical,
+      wrapBarrelPhysical,
+      wrapSurface);
+
+  new G4LogicalBorderSurface(
+      "BgoToTeflonBackCapSurface",
+      bgoPhysical,
+      wrapBackCapPhysical,
+      wrapSurface);
+
+  new G4LogicalBorderSurface(
+      "BgoToTeflonFrontCapSurface",
+      bgoPhysical,
+      wrapFrontCapPhysical,
       wrapSurface);
 
 
-  constexpr G4double couplingRadius = bgoMaxRadius + 0.1 * mm;
+  constexpr G4double couplingRadius = pmtWindowRadius;
   constexpr G4double couplingHalfThickness = 0.05 * mm;
   constexpr G4double bgoFrontZ = bgoHalfLengthZ;
   constexpr G4double couplingZ = bgoFrontZ + couplingHalfThickness;
@@ -321,7 +416,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       0,
       true);
 
-  constexpr G4double pmtWindowRadius = 14.25 * mm;
   constexpr G4double pmtWindowHalfThickness = 0.5 * mm;
   constexpr G4double pmtWindowZ =
       bgoFrontZ + 2.0 * couplingHalfThickness + pmtWindowHalfThickness;

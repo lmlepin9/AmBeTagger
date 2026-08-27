@@ -6,6 +6,7 @@
 #include "G4LogicalVolumeStore.hh"
 #include "G4Material.hh"
 #include "G4MaterialPropertiesTable.hh"
+#include "G4OpticalSurface.hh"
 #include "G4PhysicalVolumeStore.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4Tubs.hh"
@@ -128,6 +129,47 @@ bool CheckOpticalProperty(const G4Material* material,
   return true;
 }
 
+bool CheckSurfaceProperty(const G4LogicalBorderSurface* borderSurface,
+                          const std::string& label,
+                          const char* propertyName,
+                          double probeEnergy,
+                          double expectedValue,
+                          double tolerance)
+{
+  if (borderSurface == nullptr ||
+      borderSurface->GetSurfaceProperty() == nullptr) {
+    std::cerr << label << " optical surface property is missing\n";
+    return false;
+  }
+
+  const auto* opticalSurface =
+      dynamic_cast<const G4OpticalSurface*>(
+          borderSurface->GetSurfaceProperty());
+  if (opticalSurface == nullptr ||
+      opticalSurface->GetMaterialPropertiesTable() == nullptr) {
+    std::cerr << label << " optical material properties are missing\n";
+    return false;
+  }
+
+  auto* property =
+      opticalSurface->GetMaterialPropertiesTable()->GetProperty(propertyName);
+  if (property == nullptr) {
+    std::cerr << label << " is missing " << propertyName << '\n';
+    return false;
+  }
+
+  if (!CloseEnough(property->Value(probeEnergy),
+                   expectedValue,
+                   tolerance)) {
+    std::cerr << label << ' ' << propertyName
+              << " failed: actual = " << property->Value(probeEnergy)
+              << ", expected = " << expectedValue << '\n';
+    return false;
+  }
+
+  return true;
+}
+
 bool CheckVisAttributes(G4LogicalVolume* logical,
                         const std::string& label,
                         const G4Colour& expectedColour)
@@ -179,11 +221,23 @@ int main()
   G4LogicalVolume* worldLogical = LogicalVolume("WorldLogical");
   G4LogicalVolume* bgoLogical = LogicalVolume("bgoLogical");
   G4LogicalVolume* couplingLogical = LogicalVolume("CouplingLogical");
+  G4LogicalVolume* wrapBarrelLogical =
+      LogicalVolume("BgoTeflonBarrelWrapLogical");
+  G4LogicalVolume* wrapBackCapLogical =
+      LogicalVolume("BgoTeflonBackCapLogical");
+  G4LogicalVolume* wrapFrontCapLogical =
+      LogicalVolume("BgoTeflonFrontCapLogical");
   G4LogicalVolume* pmtWindowLogical = LogicalVolume("PmtWindowLogical");
   G4LogicalVolume* pmtPlaneLogical = LogicalVolume("PmtPlaneLogical");
 
   G4VPhysicalVolume* bgoPhysical = PhysicalVolume("bgoPhysical");
   G4VPhysicalVolume* couplingPhysical = PhysicalVolume("CouplingPhysical");
+  G4VPhysicalVolume* wrapBarrelPhysical =
+      PhysicalVolume("BgoTeflonBarrelWrapPhysical");
+  G4VPhysicalVolume* wrapBackCapPhysical =
+      PhysicalVolume("BgoTeflonBackCapPhysical");
+  G4VPhysicalVolume* wrapFrontCapPhysical =
+      PhysicalVolume("BgoTeflonFrontCapPhysical");
   G4VPhysicalVolume* pmtWindowPhysical = PhysicalVolume("PmtWindowPhysical");
   G4VPhysicalVolume* pmtPlanePhysical = PhysicalVolume("PmtPlanePhysical");
 
@@ -191,6 +245,12 @@ int main()
   ok &= Require(bgoPhysical != nullptr, "BGO physical volume is missing");
   ok &= Require(couplingPhysical != nullptr,
                 "EJ-550 physical volume is missing");
+  ok &= Require(wrapBarrelPhysical != nullptr,
+                "PTFE barrel wrap physical volume is missing");
+  ok &= Require(wrapBackCapPhysical != nullptr,
+                "PTFE back cap physical volume is missing");
+  ok &= Require(wrapFrontCapPhysical != nullptr,
+                "PTFE front cap physical volume is missing");
   ok &= Require(pmtWindowPhysical != nullptr,
                 "PMT window physical volume is missing");
   ok &= Require(pmtPlanePhysical != nullptr,
@@ -202,15 +262,26 @@ int main()
 
   ok &= !bgoPhysical->CheckOverlaps(1000, 0.0, false);
   ok &= !couplingPhysical->CheckOverlaps(1000, 0.0, false);
+  ok &= !wrapBarrelPhysical->CheckOverlaps(1000, 0.0, false);
+  ok &= !wrapBackCapPhysical->CheckOverlaps(1000, 0.0, false);
+  ok &= !wrapFrontCapPhysical->CheckOverlaps(1000, 0.0, false);
   ok &= !pmtWindowPhysical->CheckOverlaps(1000, 0.0, false);
   ok &= !pmtPlanePhysical->CheckOverlaps(1000, 0.0, false);
 
   const G4Tubs* bgoSolid = RequireTubs(bgoLogical, "BGO");
   const G4Tubs* couplingSolid = RequireTubs(couplingLogical, "EJ-550");
+  const G4Tubs* wrapBarrelSolid =
+      RequireTubs(wrapBarrelLogical, "PTFE barrel wrap");
+  const G4Tubs* wrapBackCapSolid =
+      RequireTubs(wrapBackCapLogical, "PTFE back cap");
+  const G4Tubs* wrapFrontCapSolid =
+      RequireTubs(wrapFrontCapLogical, "PTFE front cap");
   const G4Tubs* pmtWindowSolid = RequireTubs(pmtWindowLogical, "PMT window");
   const G4Tubs* pmtPlaneSolid = RequireTubs(pmtPlaneLogical, "PMT plane");
 
   if (bgoSolid == nullptr || couplingSolid == nullptr ||
+      wrapBarrelSolid == nullptr || wrapBackCapSolid == nullptr ||
+      wrapFrontCapSolid == nullptr ||
       pmtWindowSolid == nullptr || pmtPlaneSolid == nullptr) {
     return 1;
   }
@@ -227,11 +298,43 @@ int main()
                    kTolerance);
   ok &= CheckClose("EJ-550 radius",
                    couplingSolid->GetOuterRadius(),
-                   25.1 * mm,
+                   14.25 * mm,
                    kTolerance);
   ok &= CheckClose("EJ-550 full thickness",
                    2.0 * couplingSolid->GetZHalfLength(),
                    0.1 * mm,
+                   kTolerance);
+  ok &= CheckClose("PTFE barrel wrap inner radius",
+                   wrapBarrelSolid->GetInnerRadius(),
+                   25.0 * mm,
+                   kTolerance);
+  ok &= CheckClose("PTFE barrel wrap outer radius",
+                   wrapBarrelSolid->GetOuterRadius(),
+                   25.25 * mm,
+                   kTolerance);
+  ok &= CheckClose("PTFE barrel wrap full length",
+                   2.0 * wrapBarrelSolid->GetZHalfLength(),
+                   50.0 * mm,
+                   kTolerance);
+  ok &= CheckClose("PTFE back cap outer radius",
+                   wrapBackCapSolid->GetOuterRadius(),
+                   25.25 * mm,
+                   kTolerance);
+  ok &= CheckClose("PTFE back cap full thickness",
+                   2.0 * wrapBackCapSolid->GetZHalfLength(),
+                   0.25 * mm,
+                   kTolerance);
+  ok &= CheckClose("PTFE front cap inner radius",
+                   wrapFrontCapSolid->GetInnerRadius(),
+                   14.25 * mm,
+                   kTolerance);
+  ok &= CheckClose("PTFE front cap outer radius",
+                   wrapFrontCapSolid->GetOuterRadius(),
+                   25.25 * mm,
+                   kTolerance);
+  ok &= CheckClose("PTFE front cap full thickness",
+                   2.0 * wrapFrontCapSolid->GetZHalfLength(),
+                   0.25 * mm,
                    kTolerance);
   ok &= CheckClose("PMT window radius",
                    pmtWindowSolid->GetOuterRadius(),
@@ -254,6 +357,14 @@ int main()
                    BackFaceZ(couplingPhysical, couplingSolid),
                    FrontFaceZ(bgoPhysical, bgoSolid),
                    kTolerance);
+  ok &= CheckClose("BGO to PTFE back cap contact",
+                   FrontFaceZ(wrapBackCapPhysical, wrapBackCapSolid),
+                   BackFaceZ(bgoPhysical, bgoSolid),
+                   kTolerance);
+  ok &= CheckClose("BGO to PTFE front cap contact",
+                   BackFaceZ(wrapFrontCapPhysical, wrapFrontCapSolid),
+                   FrontFaceZ(bgoPhysical, bgoSolid),
+                   kTolerance);
   ok &= CheckClose("EJ-550 to PMT window contact",
                    BackFaceZ(pmtWindowPhysical, pmtWindowSolid),
                    FrontFaceZ(couplingPhysical, couplingSolid),
@@ -265,6 +376,9 @@ int main()
 
   ok &= CheckMaterial(bgoLogical, "BGO", "BGO");
   ok &= CheckMaterial(couplingLogical, "EJ-550", "EJ550OpticalGrease");
+  ok &= CheckMaterial(wrapBarrelLogical, "PTFE barrel wrap", "G4_TEFLON");
+  ok &= CheckMaterial(wrapBackCapLogical, "PTFE back cap", "G4_TEFLON");
+  ok &= CheckMaterial(wrapFrontCapLogical, "PTFE front cap", "G4_TEFLON");
   ok &= CheckMaterial(pmtWindowLogical, "PMT window", "UVGlass");
   ok &= CheckMaterial(pmtPlaneLogical, "PMT plane", "G4_AIR");
 
@@ -298,6 +412,15 @@ int main()
   ok &= CheckVisAttributes(couplingLogical,
                            "EJ-550",
                            G4Colour(1.0, 0.82, 0.05, 0.55));
+  ok &= CheckVisAttributes(wrapBarrelLogical,
+                           "PTFE barrel wrap",
+                           G4Colour(0.92, 0.92, 0.86, 0.72));
+  ok &= CheckVisAttributes(wrapBackCapLogical,
+                           "PTFE back cap",
+                           G4Colour(0.92, 0.92, 0.86, 0.72));
+  ok &= CheckVisAttributes(wrapFrontCapLogical,
+                           "PTFE front cap",
+                           G4Colour(0.92, 0.92, 0.86, 0.72));
   ok &= CheckVisAttributes(pmtWindowLogical,
                            "PMT window",
                            G4Colour(0.0, 0.82, 0.95, 0.45));
@@ -312,10 +435,36 @@ int main()
                     == kOutside,
                 "Point outside the PMT aperture was accepted");
 
-  const auto* wrapSurface =
-      G4LogicalBorderSurface::GetSurface(bgoPhysical, worldPhysical);
-  ok &= Require(wrapSurface != nullptr,
-                "BGO-to-world optical wrap border surface is missing");
+  const auto* barrelWrapSurface =
+      G4LogicalBorderSurface::GetSurface(bgoPhysical, wrapBarrelPhysical);
+  const auto* backCapSurface =
+      G4LogicalBorderSurface::GetSurface(bgoPhysical, wrapBackCapPhysical);
+  const auto* frontCapSurface =
+      G4LogicalBorderSurface::GetSurface(bgoPhysical, wrapFrontCapPhysical);
+  ok &= Require(barrelWrapSurface != nullptr,
+                "BGO-to-PTFE barrel optical surface is missing");
+  ok &= Require(backCapSurface != nullptr,
+                "BGO-to-PTFE back cap optical surface is missing");
+  ok &= Require(frontCapSurface != nullptr,
+                "BGO-to-PTFE front cap optical surface is missing");
+  ok &= CheckSurfaceProperty(barrelWrapSurface,
+                             "BGO-to-PTFE barrel optical surface",
+                             "REFLECTIVITY",
+                             3.0 * eV,
+                             0.9,
+                             1.0e-12);
+  ok &= CheckSurfaceProperty(backCapSurface,
+                             "BGO-to-PTFE back cap optical surface",
+                             "REFLECTIVITY",
+                             3.0 * eV,
+                             0.9,
+                             1.0e-12);
+  ok &= CheckSurfaceProperty(frontCapSurface,
+                             "BGO-to-PTFE front cap optical surface",
+                             "REFLECTIVITY",
+                             3.0 * eV,
+                             0.9,
+                             1.0e-12);
 
   if (!ok) {
     return 1;
