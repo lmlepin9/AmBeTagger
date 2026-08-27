@@ -230,6 +230,7 @@ int main()
   G4LogicalVolume* pmtWindowLogical = LogicalVolume("PmtWindowLogical");
   G4LogicalVolume* pmtPlaneLogical = LogicalVolume("PmtPlaneLogical");
   G4LogicalVolume* pmtBodyLogical = LogicalVolume("PmtBodyLogical");
+  G4LogicalVolume* pmtFoamLogical = LogicalVolume("PmtFoamSupportLogical");
 
   G4VPhysicalVolume* bgoPhysical = PhysicalVolume("bgoPhysical");
   G4VPhysicalVolume* couplingPhysical = PhysicalVolume("CouplingPhysical");
@@ -242,6 +243,7 @@ int main()
   G4VPhysicalVolume* pmtWindowPhysical = PhysicalVolume("PmtWindowPhysical");
   G4VPhysicalVolume* pmtPlanePhysical = PhysicalVolume("PmtPlanePhysical");
   G4VPhysicalVolume* pmtBodyPhysical = PhysicalVolume("PmtBodyPhysical");
+  G4VPhysicalVolume* pmtFoamPhysical = PhysicalVolume("PmtFoamSupportPhysical");
 
   ok &= Require(worldLogical != nullptr, "World logical volume is missing");
   ok &= Require(bgoPhysical != nullptr, "BGO physical volume is missing");
@@ -259,6 +261,8 @@ int main()
                 "PMT plane physical volume is missing");
   ok &= Require(pmtBodyPhysical != nullptr,
                 "PMT body physical volume is missing");
+  ok &= Require(pmtFoamPhysical != nullptr,
+                "PMT foam support physical volume is missing");
 
   if (!ok) {
     return 1;
@@ -272,6 +276,7 @@ int main()
   ok &= !pmtWindowPhysical->CheckOverlaps(1000, 0.0, false);
   ok &= !pmtPlanePhysical->CheckOverlaps(1000, 0.0, false);
   ok &= !pmtBodyPhysical->CheckOverlaps(1000, 0.0, false);
+  ok &= !pmtFoamPhysical->CheckOverlaps(1000, 0.0, false);
 
   const G4Tubs* bgoSolid = RequireTubs(bgoLogical, "BGO");
   const G4Tubs* couplingSolid = RequireTubs(couplingLogical, "EJ-550");
@@ -284,12 +289,14 @@ int main()
   const G4Tubs* pmtWindowSolid = RequireTubs(pmtWindowLogical, "PMT window");
   const G4Tubs* pmtPlaneSolid = RequireTubs(pmtPlaneLogical, "PMT plane");
   const G4Tubs* pmtBodySolid = RequireTubs(pmtBodyLogical, "PMT body");
+  const G4Tubs* pmtFoamSolid =
+      RequireTubs(pmtFoamLogical, "PMT foam support");
 
   if (bgoSolid == nullptr || couplingSolid == nullptr ||
       wrapBarrelSolid == nullptr || wrapBackCapSolid == nullptr ||
       wrapFrontCapSolid == nullptr ||
       pmtWindowSolid == nullptr || pmtPlaneSolid == nullptr ||
-      pmtBodySolid == nullptr) {
+      pmtBodySolid == nullptr || pmtFoamSolid == nullptr) {
     return 1;
   }
 
@@ -371,6 +378,18 @@ int main()
                    2.0 * pmtBodySolid->GetZHalfLength(),
                    100.0 * mm,
                    kTolerance);
+  ok &= CheckClose("PMT foam support inner radius",
+                   pmtFoamSolid->GetInnerRadius(),
+                   14.29 * mm,
+                   kTolerance);
+  ok &= CheckClose("PMT foam support outer radius",
+                   pmtFoamSolid->GetOuterRadius(),
+                   26.025 * mm,
+                   kTolerance);
+  ok &= CheckClose("PMT foam support full length",
+                   2.0 * pmtFoamSolid->GetZHalfLength(),
+                   100.0 * mm,
+                   kTolerance);
 
   ok &= CheckClose("BGO to EJ-550 contact",
                    BackFaceZ(couplingPhysical, couplingSolid),
@@ -396,6 +415,14 @@ int main()
                    BackFaceZ(pmtBodyPhysical, pmtBodySolid),
                    FrontFaceZ(pmtPlanePhysical, pmtPlaneSolid),
                    kTolerance);
+  ok &= CheckClose("PMT body and foam support back face alignment",
+                   BackFaceZ(pmtFoamPhysical, pmtFoamSolid),
+                   BackFaceZ(pmtBodyPhysical, pmtBodySolid),
+                   kTolerance);
+  ok &= CheckClose("PMT body and foam support front face alignment",
+                   FrontFaceZ(pmtFoamPhysical, pmtFoamSolid),
+                   FrontFaceZ(pmtBodyPhysical, pmtBodySolid),
+                   kTolerance);
 
   ok &= CheckMaterial(bgoLogical, "BGO", "BGO");
   ok &= CheckMaterial(couplingLogical, "EJ-550", "EJ550OpticalGrease");
@@ -405,6 +432,7 @@ int main()
   ok &= CheckMaterial(pmtWindowLogical, "PMT window", "UVGlass");
   ok &= CheckMaterial(pmtPlaneLogical, "PMT plane", "G4_AIR");
   ok &= CheckMaterial(pmtBodyLogical, "PMT body", "BorosilicateGlass");
+  ok &= CheckMaterial(pmtFoamLogical, "PMT foam support", "PolyurethaneFoam");
 
   ok &= CheckOpticalProperty(couplingLogical->GetMaterial(),
                              "RINDEX",
@@ -464,6 +492,9 @@ int main()
   ok &= CheckVisAttributes(pmtBodyLogical,
                            "PMT body",
                            G4Colour(0.18, 0.22, 0.28, 0.42));
+  ok &= CheckVisAttributes(pmtFoamLogical,
+                           "PMT foam support",
+                           G4Colour(0.04, 0.045, 0.055, 0.28));
 
   ok &= Require(detector.GetPmtPlaneVolume() == pmtPlaneLogical,
                 "Detector should still expose the PMT plane as the readout volume");
@@ -484,6 +515,15 @@ int main()
   ok &= Require(pmtPlaneSolid->Inside(G4ThreeVector(12.51 * mm, 0.0, 0.0))
                     == kOutside,
                 "Point outside the PMT aperture was accepted");
+  ok &= Require(pmtFoamSolid->Inside(G4ThreeVector(14.0 * mm, 0.0, 0.0))
+                    == kOutside,
+                "Point inside the PMT foam support bore was accepted");
+  ok &= Require(pmtFoamSolid->Inside(G4ThreeVector(20.0 * mm, 0.0, 0.0))
+                    != kOutside,
+                "Point inside the PMT foam support annulus was rejected");
+  ok &= Require(pmtFoamSolid->Inside(G4ThreeVector(26.5 * mm, 0.0, 0.0))
+                    == kOutside,
+                "Point outside the PMT foam support was accepted");
 
   const auto* barrelWrapSurface =
       G4LogicalBorderSurface::GetSurface(bgoPhysical, wrapBarrelPhysical);

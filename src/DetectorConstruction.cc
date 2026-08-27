@@ -38,6 +38,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   G4Material* air = nist->FindOrBuildMaterial("G4_AIR");
   G4Material* teflon = nist->FindOrBuildMaterial("G4_TEFLON");
+  G4Element* hydrogen = nist->FindOrBuildElement("H");
+  G4Element* carbon = nist->FindOrBuildElement("C");
+  G4Element* nitrogen = nist->FindOrBuildElement("N");
   G4Element* bismuth = nist->FindOrBuildElement("Bi");
   G4Element* germanium = nist->FindOrBuildElement("Ge");
   G4Element* oxygen = nist->FindOrBuildElement("O");
@@ -235,6 +238,17 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       couplingPhotonEnergy,
       pmtWindowAbsorptionLength);
   pmtBodyMaterial->SetMaterialPropertiesTable(pmtBodyMpt);
+
+  constexpr G4double polyurethaneFoamDensity = 0.032 * g / cm3;
+
+  G4Material* polyurethaneFoam = new G4Material(
+      "PolyurethaneFoam",
+      polyurethaneFoamDensity,
+      4);
+  polyurethaneFoam->AddElement(hydrogen, 0.060);
+  polyurethaneFoam->AddElement(carbon, 0.630);
+  polyurethaneFoam->AddElement(nitrogen, 0.060);
+  polyurethaneFoam->AddElement(oxygen, 0.250);
 
 
   constexpr G4double worldHalfLength = 50.0 * cm;
@@ -527,6 +541,34 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       G4ThreeVector(0.0 * cm, 0.0 * cm, pmtBodyZ),
       pmtBodyLogical,
       "PmtBodyPhysical",
+      worldLogical,
+      false,
+      0,
+      true);
+
+  constexpr G4double pmtFoamInnerRadius = 14.29 * mm;
+  constexpr G4double pmtFoamOuterRadius = 26.025 * mm;
+
+  G4Tubs* pmtFoamSolid = new G4Tubs(
+      "PmtFoamSupportSolid",
+      pmtFoamInnerRadius,
+      pmtFoamOuterRadius,
+      pmtBodyHalfLength,
+      0.0 * deg,
+      360.0 * deg);
+
+  G4LogicalVolume* pmtFoamLogical = new G4LogicalVolume(
+      pmtFoamSolid,
+      polyurethaneFoam,
+      "PmtFoamSupportLogical");
+  pmtFoamLogical->SetVisAttributes(
+      MakeVisAttributes(G4Colour(0.04, 0.045, 0.055, 0.28)));
+
+  new G4PVPlacement(
+      nullptr,
+      G4ThreeVector(0.0 * cm, 0.0 * cm, pmtBodyZ),
+      pmtFoamLogical,
+      "PmtFoamSupportPhysical",
       worldLogical,
       false,
       0,
