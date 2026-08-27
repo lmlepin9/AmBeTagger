@@ -135,20 +135,36 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   airMpt->AddProperty("ABSLENGTH", photonEnergy, airAbsorptionLength);
   air->SetMaterialPropertiesTable(airMpt);
 
-  G4Material* opticalCoupling = nist->FindOrBuildMaterial("G4_SILICON_DIOXIDE");
+  G4Element* silicon = nist->FindOrBuildElement("Si");
+  constexpr G4double ej550Density = 1.06 * g / cm3;
+
+  G4Material* opticalCoupling = new G4Material(
+      "EJ550OpticalGrease",
+      ej550Density,
+      1);
+  opticalCoupling->AddElement(silicon, 1);
+
   const std::vector<G4double> couplingPhotonEnergy = {
       1.5 * eV,
       7.5 * eV};
 
   const std::vector<G4double> couplingRefractiveIndex = {
-      1.50,
-      1.50};
+      1.46,
+      1.46};
+
+  const std::vector<G4double> couplingAbsorptionLength = {
+      10.0 * m,
+      10.0 * m};
 
   G4MaterialPropertiesTable* couplingMpt = new G4MaterialPropertiesTable;
   couplingMpt->AddProperty(
       "RINDEX",
       couplingPhotonEnergy,
       couplingRefractiveIndex);
+  couplingMpt->AddProperty(
+      "ABSLENGTH",
+      couplingPhotonEnergy,
+      couplingAbsorptionLength);
   opticalCoupling->SetMaterialPropertiesTable(couplingMpt);
 
 
@@ -231,8 +247,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
 
   constexpr G4double couplingRadius = bgoMaxRadius + 0.1 * mm;
-  constexpr G4double couplingHalfThickness = 0.5 * mm;
-  constexpr G4double couplingZ = 2.55 * cm;
+  constexpr G4double couplingHalfThickness = 0.05 * mm;
+  constexpr G4double bgoFrontZ = bgoHalfLengthZ;
+  constexpr G4double couplingZ = bgoFrontZ + couplingHalfThickness;
 
   G4Tubs* couplingSolid = new G4Tubs(
       "CouplingSolid",
@@ -259,7 +276,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
 constexpr G4double pmtPlaneRadius = 2.5 * cm;
 constexpr G4double pmtPlaneHalfThickness = 0.05 * mm;
-constexpr G4double pmtPlaneZ = 2.61 * cm;
+constexpr G4double pmtPlaneZ =
+    bgoFrontZ + 2.0 * couplingHalfThickness + pmtPlaneHalfThickness;
 
 G4Tubs* pmtPlaneSolid = new G4Tubs(
     "PmtPlaneSolid",
