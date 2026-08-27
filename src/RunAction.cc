@@ -20,6 +20,8 @@ void RunAction::BeginOfRunAction(const G4Run*)
   totalCerenkovPhotonCount_ = 0;
   totalPmtPhotonCount_ = 0; 
   totalPhotoelectronCount_ = 0; 
+  earliestPhotoelectronTime_ = 0.0;
+  totalPhotoelectronTime_ = 0.0;
 
 }
 
@@ -79,6 +81,15 @@ void RunAction::EndOfRunAction(const G4Run*)
 
   G4cout << "  photoelectrons / PMT photon = "
         << effectiveDetectionFraction << G4endl;
+
+  if (totalPhotoelectronCount_ > 0) {
+  G4cout << "  earliest PE time = "
+         << earliestPhotoelectronTime_ / ns << " ns" << G4endl;
+
+  G4cout << "  mean PE time = "
+         << (totalPhotoelectronTime_ / totalPhotoelectronCount_) / ns
+         << " ns" << G4endl;
+}
 }
 
 void RunAction::AddEventEnergyDeposit(G4double energyDeposit)
@@ -113,6 +124,22 @@ void RunAction::AddEventPhotonCounts(G4int scintillationPhotons,
   totalCerenkovPhotonCount_ += cerenkovPhotons;
   totalPmtPhotonCount_ += pmtPhotons;
   totalPhotoelectronCount_ += photoelectrons; 
+}
+
+void RunAction::AddEventPhotoelectronTiming(G4int photoelectrons,
+                                            G4double earliestTime,
+                                            G4double timeSum)
+{
+  if (photoelectrons == 0) {
+    return;
+  }
+
+  if (totalPhotoelectronCount_ == 0 ||
+      earliestTime < earliestPhotoelectronTime_) {
+    earliestPhotoelectronTime_ = earliestTime;
+  }
+
+  totalPhotoelectronTime_ += timeSum;
 }
 
 

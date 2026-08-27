@@ -45,9 +45,16 @@ void EventAction::EndOfEventAction(const G4Event* event)
   }
 }
 
-     
-  runAction_->AddEventEnergyDeposit(eventEnergyDeposit_);
-  runAction_->AddEventPhotonCounts(scintillationPhotonCount_, cherenkovPhotonCount_, pmtPhotonCount_,photoelectronCount_);
+runAction_->AddEventEnergyDeposit(eventEnergyDeposit_);
+
+runAction_->AddEventPhotoelectronTiming(photoelectronCount_,
+                                        earliestPhotoelectronTime_,
+                                        sumPhotoelectronTime_);
+
+runAction_->AddEventPhotonCounts(scintillationPhotonCount_,
+                                 cherenkovPhotonCount_,
+                                 pmtPhotonCount_,
+                                 photoelectronCount_);
 }
 
 void EventAction::AddEnergyDeposit(G4double energyDeposit)

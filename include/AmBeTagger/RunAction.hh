@@ -19,6 +19,10 @@ class RunAction final : public G4UserRunAction
                             G4int pmtPhotons,
                             G4int photoelectrons);
 
+  void AddEventPhotoelectronTiming(G4int photoelectrons,
+                                   G4double earliestTime,
+                                   G4double timSum);
+
  private:
   G4int eventCount_ = 0;
   G4int zeroDepositEventCount_ = 0;
@@ -30,5 +34,7 @@ class RunAction final : public G4UserRunAction
   G4int totalCerenkovPhotonCount_ = 0;
   G4int totalPmtPhotonCount_ = 0; 
   G4int totalPhotoelectronCount_ = 0; 
+  G4double earliestPhotoelectronTime_ = 0.0;
+  G4double totalPhotoelectronTime_ = 0.0; 
 };
 }
