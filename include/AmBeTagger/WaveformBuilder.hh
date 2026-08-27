@@ -1,7 +1,9 @@
 #pragma once
 
-#include "globals.hh"
+#include "AmBeTagger/SinglePhotoelectronGain.hh"
 #include "AmBeTagger/SinglePhotoelectronPulse.hh"
+#include "globals.hh"
+
 #include <vector>
 
 namespace AmBeTagger
@@ -18,8 +20,7 @@ class WaveformBuilder final
 
  private:
   SinglePhotoelectronPulse singlePE_;
+  SinglePhotoelectronGain gain_;
   G4double noiseSigma_ = 0.0;
-  G4double gainMean_ = 1.0;
-  G4double gainSigma_ = 0.0;
 };
 }

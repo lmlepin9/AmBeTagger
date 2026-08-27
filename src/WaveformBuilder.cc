@@ -2,9 +2,6 @@
 #include "G4SystemOfUnits.hh"
 #include "Randomize.hh"
 #include <cstddef>
-#include <cmath>
-
-
 
 namespace
 {
@@ -18,9 +15,8 @@ namespace AmBeTagger
 WaveformBuilder::WaveformBuilder(G4double noiseSigma,
                                  G4double gainMean,
                                  G4double gainSigma)
-    : noiseSigma_(noiseSigma),
-      gainMean_(gainMean),
-      gainSigma_(gainSigma)
+    : gain_(gainMean, gainSigma),
+      noiseSigma_(noiseSigma)
 {
 }
 
@@ -32,10 +28,7 @@ std::vector<G4double> WaveformBuilder::Build(
   photoelectronGains.reserve(photoelectronTimes.size());
 
   for (std::size_t i = 0; i < photoelectronTimes.size(); ++i) {
-    const G4double gain = gainSigma_ > 0.0
-        ? G4RandGauss::shoot(gainMean_, gainSigma_)
-        : gainMean_;
-    photoelectronGains.push_back(gain);
+    photoelectronGains.push_back(gain_.Sample());
   }
 
   std::vector<G4double> waveform(SampleCount(), 0.0);
