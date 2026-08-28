@@ -1,5 +1,7 @@
 #include "AmBeTagger/RunAction.hh"
 
+#include "AmBeTagger/RootOutputWriter.hh"
+#include "G4GenericMessenger.hh"
 #include "G4Run.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4ios.hh"
@@ -8,8 +10,75 @@
 
 namespace AmBeTagger
 {
+RunAction::RunAction()
+{
+  outputMessenger_ = std::make_unique<G4GenericMessenger>(
+      this, "/AmBeTagger/output/", "AmBeTagger ROOT output control");
+
+  auto& rootFileCommand = outputMessenger_->DeclareProperty(
+      "rootFile", outputFileName_,
+      "Run-level ROOT output file. Leave unset to disable all file output.");
+  rootFileCommand.SetStates(G4State_PreInit, G4State_Idle);
+
+  auto& waveformCommand = outputMessenger_->DeclareProperty(
+      "enableWaveform", waveformOutputEnabled_,
+      "Store the PMT waveform branch when ROOT output is enabled.");
+  waveformCommand.SetStates(G4State_PreInit, G4State_Idle);
+}
+
+RunAction::~RunAction() = default;
+
+const G4String& RunAction::OutputFileName() const
+{
+  return outputFileName_;
+}
+
+G4bool RunAction::IsOutputEnabled() const
+{
+  return !outputFileName_.empty();
+}
+
+G4bool RunAction::IsWaveformOutputEnabled() const
+{
+  return IsOutputEnabled() && waveformOutputEnabled_;
+}
+
+void RunAction::RecordEvent(G4int eventID,
+                            G4double totalEdepBGO,
+                            G4int numPmtPhotons,
+                            G4int numCerenkovPhotons,
+                            G4int numScintillationPhotons,
+                            G4int numPhotoelectrons,
+                            G4double earliestPETime,
+                            const std::vector<G4double>& pmtWaveform)
+{
+  if (!outputWriter_) {
+    return;
+  }
+
+  outputWriter_->FillEvent(eventID,
+                           totalEdepBGO,
+                           numPmtPhotons,
+                           numCerenkovPhotons,
+                           numScintillationPhotons,
+                           numPhotoelectrons,
+                           earliestPETime,
+                           pmtWaveform);
+}
+
 void RunAction::BeginOfRunAction(const G4Run*)
 {
+  if (IsOutputEnabled()) {
+    outputWriter_ =
+        std::make_unique<RootOutputWriter>(waveformOutputEnabled_);
+
+    if (!outputWriter_->Open(outputFileName_)) {
+      G4cerr << "Unable to open ROOT output file: "
+             << outputFileName_ << G4endl;
+      outputWriter_.reset();
+    }
+  }
+
   eventCount_ = 0;
   zeroDepositEventCount_ = 0;
   totalEnergyDeposit_ = 0.0;
@@ -27,6 +96,11 @@ void RunAction::BeginOfRunAction(const G4Run*)
 
 void RunAction::EndOfRunAction(const G4Run*)
 {
+  if (outputWriter_) {
+    outputWriter_->Close();
+    outputWriter_.reset();
+  }
+
   const G4double meanEnergyDeposit =
       eventCount_ > 0 ? totalEnergyDeposit_ / eventCount_ : 0.0;
 

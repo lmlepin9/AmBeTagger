@@ -2,4 +2,6 @@
 /run/verbose 1
 /event/verbose 0
 /tracking/verbose 0
+/AmBeTagger/output/rootFile output.root
+/AmBeTagger/output/enableWaveform true
 /run/beamOn 1000

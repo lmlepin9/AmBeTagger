@@ -28,6 +28,12 @@ void EventAction::BeginOfEventAction(const G4Event*)
 
 void EventAction::EndOfEventAction(const G4Event* event)
 {
+  std::vector<G4double> pmtWaveform;
+  if (runAction_->IsWaveformOutputEnabled()) {
+    WaveformBuilder waveformBuilder;
+    pmtWaveform = waveformBuilder.Build(photoelectronTimes_);
+  }
+
   if (event->GetEventID() < 10) {
   G4cout << "Event " << event->GetEventID()
          << " BGO energy deposit = "
@@ -92,6 +98,15 @@ runAction_->AddEventPhotonCounts(scintillationPhotonCount_,
                                  cherenkovPhotonCount_,
                                  pmtPhotonCount_,
                                  photoelectronCount_);
+
+runAction_->RecordEvent(event->GetEventID(),
+                        eventEnergyDeposit_,
+                        pmtPhotonCount_,
+                        cherenkovPhotonCount_,
+                        scintillationPhotonCount_,
+                        photoelectronCount_,
+                        earliestPhotoelectronTime_,
+                        pmtWaveform);
 }
 
 void EventAction::AddEnergyDeposit(G4double energyDeposit)

@@ -10,6 +10,7 @@ add_executable(ambe_tagger
   src/EventAction.cc
   src/SteppingAction.cc
   src/TrackingAction.cc
+  src/RootOutputWriter.cc
   src/RunAction.cc
   src/PmtResponse.cc
   src/WaveformBuilder.cc

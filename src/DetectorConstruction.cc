@@ -65,6 +65,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   bgo->AddElement(germanium,3);
   bgo->AddElement(oxygen,12);
 
+  constexpr G4double bgoBirksConstant = 0.008415 * mm / MeV;
+  bgo->GetIonisation()->SetBirksConstant(bgoBirksConstant);
 
   const std::vector<G4double> photonEnergy =  {
         1.771*eV, 1.784*eV, 1.797*eV, 1.810*eV, 1.823*eV, 1.837*eV, 1.850*eV, 1.864*eV, 1.878*eV, 1.893*eV,
