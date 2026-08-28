@@ -10,5 +10,5 @@ Makefile
 *.dylib
 *.dll
 *.exe
-
+*.root 
 .DS_Store
