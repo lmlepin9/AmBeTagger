@@ -1,0 +1,17 @@
+/random/setSeeds 12345 67890
+/run/verbose 1
+/event/verbose 0
+/tracking/verbose 0
+/AmBeTagger/output/rootFile gamma_4.4-MeV_source-capsule_iso_output.root
+/AmBeTagger/output/enableWaveform true
+/gps/particle gamma
+/gps/pos/type Surface
+/gps/pos/shape Cylinder
+/gps/pos/centre 0.0 0.0 -4.188 cm
+/gps/pos/radius 7.8 mm
+/gps/pos/halfz 5.0 mm
+/gps/pos/confine SourceCapsulePhysical
+/gps/ang/type iso
+/gps/ene/type Mono
+/gps/ene/mono 4.4 MeV
+/run/beamOn 1000

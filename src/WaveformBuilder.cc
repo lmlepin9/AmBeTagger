@@ -7,6 +7,7 @@ namespace
 {
 constexpr G4int kSampleCount = 1500;
 constexpr G4double kSampleSpacing = 2.0 * ns;
+constexpr G4double kTriggerTime = 700.0 * ns;
 }
 
 namespace AmBeTagger
@@ -57,9 +58,14 @@ G4double WaveformBuilder::SampleSpacing() const
   return kSampleSpacing;
 }
 
+G4double WaveformBuilder::TriggerTime() const
+{
+  return kTriggerTime;
+}
+
 G4double WaveformBuilder::StartTime() const
 {
-  return 0.0;
+  return -TriggerTime();
 }
 
 G4double WaveformBuilder::EndTime() const

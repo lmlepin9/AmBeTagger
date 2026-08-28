@@ -15,6 +15,7 @@ constexpr double kTauFallNs = 5.0;
 constexpr double kTransitTimeNs = 23.0;
 constexpr G4double kBinWidth = 2.0 * ns;
 constexpr G4int kSampleCount = 1500;
+constexpr G4double kTriggerTime = 700.0 * ns;
 constexpr G4double kNoiseSigma = 0.001;
 constexpr G4double kGainMean = 0.005;
 constexpr G4double kGainSigma = 0.0006;
@@ -83,25 +84,37 @@ int main()
     return 1;
   }
 
-  if (!CloseEnough(builder.StartTime(), 0.0 * ns, 1.0e-12)) {
+  if (!CloseEnough(builder.TriggerTime(), kTriggerTime, 1.0e-12)) {
+    std::cerr << "Trigger time failed: " << builder.TriggerTime() / ns
+              << " ns\n";
+    return 1;
+  }
+
+  if (!CloseEnough(builder.StartTime(), -kTriggerTime, 1.0e-12)) {
     std::cerr << "Start time failed: " << builder.StartTime() / ns
               << " ns\n";
     return 1;
   }
 
-  if (!CloseEnough(builder.SampleTime(0), 0.0 * ns, 1.0e-12)) {
+  if (!CloseEnough(builder.SampleTime(0), -700.0 * ns, 1.0e-12)) {
     std::cerr << "Sample 0 time failed: " << builder.SampleTime(0) / ns
               << " ns\n";
     return 1;
   }
 
-  if (!CloseEnough(builder.SampleTime(12), 24.0 * ns, 1.0e-12)) {
+  if (!CloseEnough(builder.SampleTime(12), -676.0 * ns, 1.0e-12)) {
     std::cerr << "Sample 12 time failed: " << builder.SampleTime(12) / ns
               << " ns\n";
     return 1;
   }
 
-  if (!CloseEnough(builder.EndTime(), 2998.0 * ns, 1.0e-12)) {
+  if (!CloseEnough(builder.SampleTime(350), 0.0 * ns, 1.0e-12)) {
+    std::cerr << "Trigger sample time failed: "
+              << builder.SampleTime(350) / ns << " ns\n";
+    return 1;
+  }
+
+  if (!CloseEnough(builder.EndTime(), 2298.0 * ns, 1.0e-12)) {
     std::cerr << "End time failed: " << builder.EndTime() / ns
               << " ns\n";
     return 1;
@@ -137,30 +150,30 @@ int main()
     return 1;
   }
 
-  if (!CloseEnough(waveform[0], 0.0, 1.0e-12)) {
-    std::cerr << "Sample 0 failed: " << waveform[0] << '\n';
+  if (!CloseEnough(waveform[350], 0.0, 1.0e-12)) {
+    std::cerr << "Trigger sample failed: " << waveform[350] << '\n';
     return 1;
   }
 
-  if (!CloseEnough(waveform[1], 0.0, 1.0e-12)) {
-    std::cerr << "Sample 1 failed: " << waveform[1] << '\n';
+  if (!CloseEnough(waveform[351], 0.0, 1.0e-12)) {
+    std::cerr << "Sample 351 failed: " << waveform[351] << '\n';
     return 1;
   }
 
-  if (!CloseEnough(waveform[2], 0.0, 1.0e-12)) {
-    std::cerr << "Sample 2 failed: " << waveform[2] << '\n';
+  if (!CloseEnough(waveform[352], 0.0, 1.0e-12)) {
+    std::cerr << "Sample 352 failed: " << waveform[352] << '\n';
     return 1;
   }
 
-  if (!CloseEnough(waveform[11], 0.0, 1.0e-12)) {
-    std::cerr << "Sample 11 failed: " << waveform[11] << '\n';
+  if (!CloseEnough(waveform[361], 0.0, 1.0e-12)) {
+    std::cerr << "Sample 361 failed: " << waveform[361] << '\n';
     return 1;
   }
 
-  if (!CloseEnough(waveform[12],
+  if (!CloseEnough(waveform[362],
                    ExpectedPulseAmplitude(24.0, 0.0),
                    1.0e-12)) {
-    std::cerr << "Sample 12 failed: " << waveform[12] << '\n';
+    std::cerr << "Sample 362 failed: " << waveform[362] << '\n';
     return 1;
   }
 
@@ -168,15 +181,17 @@ int main()
   const std::vector<G4double> delayedWaveform =
       builder.Build(delayedPeTimes);
 
-  if (!CloseEnough(delayedWaveform[21], 0.0, 1.0e-12)) {
-    std::cerr << "Delayed sample 21 failed: " << delayedWaveform[21] << '\n';
+  if (!CloseEnough(delayedWaveform[371], 0.0, 1.0e-12)) {
+    std::cerr << "Delayed sample 371 failed: " << delayedWaveform[371]
+              << '\n';
     return 1;
   }
 
-  if (!CloseEnough(delayedWaveform[22],
+  if (!CloseEnough(delayedWaveform[372],
                    ExpectedPulseAmplitude(44.0, 20.0),
                    1.0e-12)) {
-    std::cerr << "Delayed sample 22 failed: " << delayedWaveform[22] << '\n';
+    std::cerr << "Delayed sample 372 failed: " << delayedWaveform[372]
+              << '\n';
     return 1;
   }
 
@@ -187,11 +202,11 @@ int main()
   const double expectedSimultaneousSample =
       2.0 * ExpectedPulseAmplitude(24.0, 0.0);
 
-  if (!CloseEnough(simultaneousPeWaveform[12],
+  if (!CloseEnough(simultaneousPeWaveform[362],
                    expectedSimultaneousSample,
                    1.0e-12)) {
-    std::cerr << "Two simultaneous PE sample 12 failed: "
-              << simultaneousPeWaveform[12] << '\n';
+    std::cerr << "Two simultaneous PE sample 362 failed: "
+              << simultaneousPeWaveform[362] << '\n';
     return 1;
   }
 
@@ -203,17 +218,17 @@ int main()
       ExpectedPulseAmplitude(44.0, 0.0)
       + ExpectedPulseAmplitude(44.0, 20.0);
 
-  if (!CloseEnough(twoPeWaveform[22], expectedSample22, 1.0e-12)) {
-    std::cerr << "Two separated PE sample 22 failed: " << twoPeWaveform[22]
+  if (!CloseEnough(twoPeWaveform[372], expectedSample22, 1.0e-12)) {
+    std::cerr << "Two separated PE sample 372 failed: " << twoPeWaveform[372]
               << '\n';
     return 1;
   }
 
   const std::vector<G4double> earlyPeWaveform =
-      builder.Build({-24.0 * ns});
+      builder.Build({-724.0 * ns});
 
   if (!CloseEnough(earlyPeWaveform[0],
-                   ExpectedPulseAmplitude(0.0, -24.0),
+                   ExpectedPulseAmplitude(-700.0, -724.0),
                    1.0e-12)) {
     std::cerr << "Early PE sample 0 failed: " << earlyPeWaveform[0] << '\n';
     return 1;
@@ -225,7 +240,7 @@ int main()
   }
 
   const std::vector<G4double> latePeWaveform =
-      builder.Build({3000.0 * ns});
+      builder.Build({2300.0 * ns});
 
   for (G4double sample : latePeWaveform) {
     if (!CloseEnough(sample, 0.0, 1.0e-12)) {
@@ -235,7 +250,7 @@ int main()
   }
 
   const std::vector<G4double> endPeWaveform =
-      builder.Build({2974.0 * ns});
+      builder.Build({2274.0 * ns});
 
   if (!CloseEnough(endPeWaveform[1498], 0.0, 1.0e-12)) {
     std::cerr << "End PE sample 1498 failed: " << endPeWaveform[1498]
@@ -244,7 +259,7 @@ int main()
   }
 
   if (!CloseEnough(endPeWaveform[1499],
-                   ExpectedPulseAmplitude(builder.EndTime() / ns, 2974.0),
+                   ExpectedPulseAmplitude(builder.EndTime() / ns, 2274.0),
                    1.0e-12)) {
     std::cerr << "End PE sample 1499 failed: " << endPeWaveform[1499]
               << '\n';
@@ -291,23 +306,23 @@ int main()
   const std::vector<G4double> repeatedGainWaveform =
       gainBuilder.Build({0.0 * ns});
 
-  if (!CloseEnough(gainWaveform[12], repeatedGainWaveform[12], 1.0e-12)) {
+  if (!CloseEnough(gainWaveform[362], repeatedGainWaveform[362], 1.0e-12)) {
     std::cerr << "Seeded gain reproducibility failed: "
-              << gainWaveform[12] << " vs " << repeatedGainWaveform[12]
+              << gainWaveform[362] << " vs " << repeatedGainWaveform[362]
               << '\n';
     return 1;
   }
 
-  if (gainWaveform[12] <= 0.0) {
+  if (gainWaveform[362] <= 0.0) {
     std::cerr << "Smeared gain sample should be positive: "
-              << gainWaveform[12] << '\n';
+              << gainWaveform[362] << '\n';
     return 1;
   }
 
   const double meanGainSample =
       kGainMean * ExpectedPulseAmplitude(24.0, 0.0);
 
-  if (CloseEnough(gainWaveform[12], meanGainSample, 1.0e-12)) {
+  if (CloseEnough(gainWaveform[362], meanGainSample, 1.0e-12)) {
     std::cerr << "Gain sample was not smeared away from the mean-only value\n";
     return 1;
   }

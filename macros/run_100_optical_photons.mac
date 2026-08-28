@@ -3,10 +3,13 @@
 /event/verbose 0
 /tracking/verbose 0
 
-/gun/particle opticalphoton
-/gun/energy 2.76 eV
-/gun/position 0.0 0.0 0.0 cm
-/gun/direction 0.0 0.0 1.0
-/gun/polarization 1.0 0.0 0.0
+/gps/particle opticalphoton
+/gps/pos/type Point
+/gps/pos/centre 0.0 0.0 0.0 cm
+/gps/ang/type planar
+/gps/direction 0.0 0.0 1.0
+/gps/polarization 1.0 0.0 0.0
+/gps/ene/type Mono
+/gps/ene/mono 2.76 eV
 
 /run/beamOn 100

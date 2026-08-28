@@ -366,8 +366,6 @@ int main()
       LogicalVolume("SourceCapsuleLogical");
   G4LogicalVolume* sourceSurroundingShieldLogical =
       LogicalVolume("SourceSurroundingShieldLogical");
-  G4LogicalVolume* sourcePvcHolderLogical =
-      LogicalVolume("SourcePvcHolderLogical");
   G4LogicalVolume* readoutPvcHolderLogical =
       LogicalVolume("ReadoutPvcHolderLogical");
   G4LogicalVolume* outerPvcBarrelLogical =
@@ -395,8 +393,6 @@ int main()
       PhysicalVolume("SourceCapsulePhysical");
   G4VPhysicalVolume* sourceSurroundingShieldPhysical =
       PhysicalVolume("SourceSurroundingShieldPhysical");
-  G4VPhysicalVolume* sourcePvcHolderPhysical =
-      PhysicalVolume("SourcePvcHolderPhysical");
   G4VPhysicalVolume* readoutPvcHolderPhysical =
       PhysicalVolume("ReadoutPvcHolderPhysical");
   G4VPhysicalVolume* outerPvcBarrelPhysical =
@@ -430,8 +426,6 @@ int main()
                 "Source capsule physical volume is missing");
   ok &= Require(sourceSurroundingShieldPhysical != nullptr,
                 "Source surrounding shield physical volume is missing");
-  ok &= Require(sourcePvcHolderPhysical != nullptr,
-                "Source PVC holder physical volume is missing");
   ok &= Require(readoutPvcHolderPhysical != nullptr,
                 "Readout PVC holder physical volume is missing");
   ok &= Require(outerPvcBarrelPhysical != nullptr,
@@ -457,7 +451,6 @@ int main()
   ok &= !sourceShieldPhysical->CheckOverlaps(1000, 0.0, false);
   ok &= !sourceCapsulePhysical->CheckOverlaps(1000, 0.0, false);
   ok &= !sourceSurroundingShieldPhysical->CheckOverlaps(1000, 0.0, false);
-  ok &= !sourcePvcHolderPhysical->CheckOverlaps(1000, 0.0, false);
   ok &= !readoutPvcHolderPhysical->CheckOverlaps(1000, 0.0, false);
   ok &= !outerPvcBarrelPhysical->CheckOverlaps(1000, 0.0, false);
   ok &= !outerPvcRearEndCapPhysical->CheckOverlaps(1000, 0.0, false);
@@ -483,8 +476,6 @@ int main()
   const G4Tubs* sourceSurroundingShieldSolid =
       RequireTubs(sourceSurroundingShieldLogical,
                   "Source surrounding shield");
-  const G4Polycone* sourcePvcHolderSolid =
-      RequirePolycone(sourcePvcHolderLogical, "Source PVC holder");
   const G4Polycone* readoutPvcHolderSolid =
       RequirePolycone(readoutPvcHolderLogical, "Readout PVC holder");
   const G4Tubs* outerPvcBarrelSolid =
@@ -501,7 +492,6 @@ int main()
       pmtBodySolid == nullptr || pmtFoamSolid == nullptr ||
       sourceShieldSolid == nullptr || sourceCapsuleSolid == nullptr ||
       sourceSurroundingShieldSolid == nullptr ||
-      sourcePvcHolderSolid == nullptr ||
       readoutPvcHolderSolid == nullptr ||
       outerPvcBarrelSolid == nullptr ||
       outerPvcRearEndCapSolid == nullptr ||
@@ -648,13 +638,6 @@ int main()
   }
 
   ok &= CheckPolyconeProfile(
-      sourcePvcHolderSolid,
-      "Source PVC holder",
-      {-5.815 * mm, -4.1921 * mm, -4.185 * mm, 5.815 * mm},
-      {0.0 * mm, 0.0 * mm, 7.9 * mm, 7.9 * mm},
-      {26.025 * mm, 26.025 * mm, 26.025 * mm, 26.025 * mm},
-      kTolerance);
-  ok &= CheckPolyconeProfile(
       readoutPvcHolderSolid,
       "Readout PVC holder",
       {-60.0 * mm, -40.001 * mm, -40.0 * mm,
@@ -679,9 +662,12 @@ int main()
   ok &= CheckPolyconeProfile(
       outerPvcRearEndCapSolid,
       "Outer PVC rear end cap",
-      {-17.365 * mm, 2.635 * mm, 2.636 * mm, 17.365 * mm},
-      {0.0 * mm, 0.0 * mm, 0.0 * mm, 0.0 * mm},
-      {35.235 * mm, 35.235 * mm, 26.0 * mm, 26.0 * mm},
+      {-17.365 * mm, 2.635 * mm, 2.636 * mm,
+       17.365 * mm, 17.366 * mm, 28.995 * mm},
+      {0.0 * mm, 0.0 * mm, 0.0 * mm,
+       0.0 * mm, 0.0 * mm, 0.0 * mm},
+      {35.235 * mm, 35.235 * mm, 26.0 * mm,
+       26.0 * mm, 26.025 * mm, 26.025 * mm},
       kTolerance);
   ok &= CheckPolyconeProfile(
       outerPvcFrontEndCapSolid,
@@ -743,9 +729,9 @@ int main()
                    BackFaceZ(sourceSurroundingShieldPhysical,
                              sourceSurroundingShieldSolid),
                    kTolerance);
-  ok &= CheckClose("Source PVC holder to source capsule contact",
-                   PolyconeFrontFaceZ(sourcePvcHolderPhysical,
-                                      sourcePvcHolderSolid),
+  ok &= CheckClose("Outer PVC rear end cap to source capsule contact",
+                   PolyconeFrontFaceZ(outerPvcRearEndCapPhysical,
+                                      outerPvcRearEndCapSolid),
                    PolyconeBackFaceZ(sourceCapsulePhysical,
                                      sourceCapsuleSolid),
                    kTolerance);
@@ -760,20 +746,14 @@ int main()
                                   2),
                    BackFaceZ(outerPvcBarrelPhysical, outerPvcBarrelSolid),
                    kTolerance);
-  ok &= CheckClose("Outer PVC rear end cap to source PVC holder contact",
-                   PolyconeFrontFaceZ(outerPvcRearEndCapPhysical,
-                                      outerPvcRearEndCapSolid),
-                   PolyconeBackFaceZ(sourcePvcHolderPhysical,
-                                     sourcePvcHolderSolid),
-                   kTolerance);
   ok &= Require(FrontFaceZ(outerPvcBarrelPhysical, outerPvcBarrelSolid) >
                     PolyconeFrontFaceZ(readoutPvcHolderPhysical,
                                        readoutPvcHolderSolid),
                 "Outer PVC barrel should extend past the readout PVC holder");
   ok &= Require(BackFaceZ(outerPvcBarrelPhysical, outerPvcBarrelSolid) <
-                    PolyconeBackFaceZ(sourcePvcHolderPhysical,
-                                      sourcePvcHolderSolid),
-                "Outer PVC barrel should start before the source PVC holder");
+                    PolyconeBackFaceZ(sourceCapsulePhysical,
+                                      sourceCapsuleSolid),
+                "Outer PVC barrel should start before the source capsule");
   ok &= CheckClose("Outer PVC front end cap to barrel contact",
                    PolyconeBackFaceZ(outerPvcFrontEndCapPhysical,
                                      outerPvcFrontEndCapSolid),
@@ -802,7 +782,6 @@ int main()
                    sourceShieldLogical->GetMaterial()->GetDensity(),
                    8.0 * g / cm3,
                    1.0e-12 * g / cm3);
-  ok &= CheckMaterial(sourcePvcHolderLogical, "Source PVC holder", "WhitePVC");
   ok &= CheckMaterial(readoutPvcHolderLogical,
                       "Readout PVC holder",
                       "WhitePVC");
@@ -816,25 +795,25 @@ int main()
                       "Outer PVC front end cap",
                       "WhitePVC");
   ok &= CheckClose("White PVC density",
-                   sourcePvcHolderLogical->GetMaterial()->GetDensity(),
+                   outerPvcRearEndCapLogical->GetMaterial()->GetDensity(),
                    1.38 * g / cm3,
                    1.0e-12 * g / cm3);
-  ok &= CheckOpticalProperty(sourcePvcHolderLogical->GetMaterial(),
+  ok &= CheckOpticalProperty(outerPvcRearEndCapLogical->GetMaterial(),
                              "RINDEX",
                              1.771 * eV,
                              1.54,
                              1.0e-12);
-  ok &= CheckOpticalProperty(sourcePvcHolderLogical->GetMaterial(),
+  ok &= CheckOpticalProperty(outerPvcRearEndCapLogical->GetMaterial(),
                              "RINDEX",
                              7.085 * eV,
                              1.54,
                              1.0e-12);
-  ok &= CheckOpticalProperty(sourcePvcHolderLogical->GetMaterial(),
+  ok &= CheckOpticalProperty(outerPvcRearEndCapLogical->GetMaterial(),
                              "ABSLENGTH",
                              1.771 * eV,
                              0.1 * mm,
                              1.0e-12 * mm);
-  ok &= CheckOpticalProperty(sourcePvcHolderLogical->GetMaterial(),
+  ok &= CheckOpticalProperty(outerPvcRearEndCapLogical->GetMaterial(),
                              "ABSLENGTH",
                              7.085 * eV,
                              0.1 * mm,
@@ -920,9 +899,6 @@ int main()
   ok &= CheckVisAttributes(sourceSurroundingShieldLogical,
                            "Source surrounding shield",
                            G4Colour(0.58, 0.60, 0.63, 0.76));
-  ok &= CheckVisAttributes(sourcePvcHolderLogical,
-                           "Source PVC holder",
-                           G4Colour(0.96, 0.96, 0.90, 0.30));
   ok &= CheckVisAttributes(readoutPvcHolderLogical,
                            "Readout PVC holder",
                            G4Colour(0.96, 0.96, 0.90, 0.30));
@@ -936,8 +912,6 @@ int main()
                            "Outer PVC front end cap",
                            G4Colour(0.96, 0.96, 0.90, 0.30));
 
-  const G4LogicalSkinSurface* sourcePvcHolderSkinSurface =
-      G4LogicalSkinSurface::GetSurface(sourcePvcHolderLogical);
   const G4LogicalSkinSurface* readoutPvcHolderSkinSurface =
       G4LogicalSkinSurface::GetSurface(readoutPvcHolderLogical);
   const G4LogicalSkinSurface* outerPvcBarrelSkinSurface =
@@ -947,8 +921,6 @@ int main()
   const G4LogicalSkinSurface* outerPvcFrontEndCapSkinSurface =
       G4LogicalSkinSurface::GetSurface(outerPvcFrontEndCapLogical);
 
-  ok &= Require(sourcePvcHolderSkinSurface != nullptr,
-                "Source PVC holder skin surface is missing");
   ok &= Require(readoutPvcHolderSkinSurface != nullptr,
                 "Readout PVC holder skin surface is missing");
   ok &= Require(outerPvcBarrelSkinSurface != nullptr,
@@ -959,7 +931,7 @@ int main()
                 "Outer PVC front end cap skin surface is missing");
 
   const G4OpticalSurface* whitePvcSurface = OpticalSurfaceFromSkinSurface(
-      sourcePvcHolderSkinSurface,
+      outerPvcRearEndCapSkinSurface,
       "White PVC");
   if (whitePvcSurface != nullptr) {
     ok &= Require(whitePvcSurface->GetType() == dielectric_dielectric,
@@ -1054,14 +1026,14 @@ int main()
                     G4ThreeVector(20.0 * mm, 0.0, 0.0))
                     != kOutside,
                 "Point inside the source surrounding shield annulus was rejected");
-  ok &= Require(sourcePvcHolderSolid->Inside(G4ThreeVector(4.0 * mm, 0.0,
-                                                           -5.0 * mm))
+  ok &= Require(outerPvcRearEndCapSolid->Inside(
+                    G4ThreeVector(4.0 * mm, 0.0, 23.0 * mm))
                     != kOutside,
-                "Point inside the source PVC holder closed disk was rejected");
-  ok &= Require(sourcePvcHolderSolid->Inside(G4ThreeVector(7.8 * mm, 0.0,
-                                                           0.0))
+                "Point inside the merged rear end cap center was rejected");
+  ok &= Require(outerPvcRearEndCapSolid->Inside(
+                    G4ThreeVector(27.0 * mm, 0.0, 23.0 * mm))
                     == kOutside,
-                "Point inside the source PVC holder opening was accepted");
+                "Point outside the merged rear end cap source tube was accepted");
   ok &= Require(readoutPvcHolderSolid->Inside(G4ThreeVector(20.0 * mm, 0.0,
                                                             -39.5 * mm))
                     != kOutside,
