@@ -2,13 +2,13 @@
 /run/verbose 1
 /event/verbose 0
 /tracking/verbose 0
-/AmBeTagger/output/rootFile neutron_4-MeV_output.root
+/AmBeTagger/output/rootFile gamma_4.4-MeV_output.root
 /AmBeTagger/output/enableWaveform true
-/gps/particle neutron
+/gps/particle gamma
 /gps/pos/type Point
 /gps/pos/centre 0.0 0.5 -10.0 cm
 /gps/ang/type planar
 /gps/direction 0.0 0.0 1.0
 /gps/ene/type Mono
-/gps/ene/mono 4.0 MeV
-/run/beamOn 1000
+/gps/ene/mono 4.4 MeV
+/run/beamOn 100000

@@ -1,0 +1,72 @@
+# Simplified cosmic-muon response study for the AmBe tagger.
+# DetectorConstruction places the tagger on the global z-axis with no rotation:
+#   - BGO crystal: cylinder at (0,0,0), radius 2.5 cm, z half-length 2.5 cm.
+#   - Maximum outer radius: 3.5235 cm from the outer PVC.
+#   - Rear/source-side end: about z = -9.324 cm.
+#   - Top/front-end-cap end: about z = 33.821 cm.
+#   - World: cube with x,y,z in [-50 cm, +50 cm].
+
+/random/setSeeds 24680 13579
+/run/verbose 1
+/event/verbose 0
+/tracking/verbose 0
+
+/AmBeTagger/output/rootFile cosmic_muons_gps_output.root
+/AmBeTagger/output/enableWaveform true
+
+# Particle choice. To run positive muons instead, change mu- to mu+.
+/gps/particle mu-
+
+# Uniform rectangular plane perpendicular to the tagger/global z-axis.
+# In this geometry convention z is vertical, so the plane is above the tagger.
+# It is 6.179 cm above the front end cap and inside the world volume.
+# Change halfx/halfy to resize the transverse coverage.
+/gps/pos/type Plane
+/gps/pos/shape Rectangle
+/gps/pos/centre 0.0 0.0 40.0 cm
+/gps/pos/rot1 1.0 0.0 0.0
+/gps/pos/rot2 0.0 1.0 0.0
+/gps/pos/halfx 4.0 cm
+/gps/pos/halfy 4.0 cm
+
+# Angular distribution.
+# GPS /gps/ang/type cos is a surface cosine-law distribution, not cos^2(theta).
+# Here /gps/ang/type user uses a theta histogram. The weights approximate
+# dN/dOmega proportional to cos^2(theta), sampled as
+# p(theta) dtheta proportional to sin(theta)*cos^2(theta) dtheta.
+# Phi is left uniform from 0 to 2*pi. The distribution is truncated at 45 deg.
+#
+# GPS forms user angular vectors around local -z. With global axes, all
+# generated muons have pz < 0 and travel downward from the source plane
+# toward the tagger.
+/gps/ang/type user
+/gps/ang/surfnorm false
+/gps/ang/user_coor false
+/gps/ang/mintheta 0.0 rad
+/gps/ang/maxtheta 0.785398163 rad
+/gps/ang/minphi 0.0 rad
+/gps/ang/maxphi 6.283185307 rad
+/gps/hist/reset theta
+/gps/hist/type theta
+/gps/hist/point 0.000000000 0.000000000
+/gps/hist/point 0.087266463 0.011372520
+/gps/hist/point 0.174532925 0.033515314
+/gps/hist/point 0.261799388 0.053891101
+/gps/hist/point 0.349065850 0.071451599
+/gps/hist/point 0.436332313 0.085333864
+/gps/hist/point 0.523598776 0.094916549
+/gps/hist/point 0.610865238 0.099859781
+/gps/hist/point 0.698131701 0.100125940
+/gps/hist/point 0.785398163 0.095979942
+
+# For vertical muons used in basic geometry validation, replace the user
+# angular block above with:
+#   /gps/ang/type planar
+#   /gps/direction 0.0 0.0 -1.0
+
+# Monoenergetic kinetic energy. Change this line to scan energy.
+/gps/ene/type Mono
+/gps/ene/mono 4.0 GeV
+
+# Number of events. Change this line for longer or shorter studies.
+/run/beamOn 10000
