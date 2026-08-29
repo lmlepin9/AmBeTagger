@@ -1,0 +1,26 @@
+/random/setSeeds 12345 67890
+/run/verbose 1
+/event/verbose 0
+/tracking/verbose 0
+/AmBeTagger/output/rootFile cosmic_muon_to_bgo_output.root
+/AmBeTagger/output/enableWaveform true
+
+# Switch to mu+ by changing mu- to mu+.
+/gps/particle mu-
+
+# Point source above the tagger. The front end cap reaches about z = 33.821 cm,
+# and the world extends to z = +50 cm, so z = +40 cm is safely inside.
+# The 0.5 cm y offset avoids the 1 mm-radius bore in the BGO crystal.
+/gps/pos/type Point
+/gps/pos/centre 0.0 0.5 40.0 cm
+
+# Vertical muon aimed directly through BGO material.
+/gps/ang/type planar
+/gps/direction 0.0 0.0 -1.0
+
+# Change this line to scan muon kinetic energy.
+/gps/ene/type Mono
+/gps/ene/mono 4.0 GeV
+
+# Change this line for more or fewer events.
+/run/beamOn 100

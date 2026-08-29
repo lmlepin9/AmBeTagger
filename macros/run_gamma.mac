@@ -11,4 +11,4 @@
 /gps/direction 0.0 0.0 1.0
 /gps/ene/type Mono
 /gps/ene/mono 4.4 MeV
-/run/beamOn 100000
+/run/beamOn 10000

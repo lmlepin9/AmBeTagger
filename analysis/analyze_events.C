@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <numeric>
 #include <string>
 #include <vector>
 
@@ -47,15 +48,19 @@ void analyze_events(const char* fileName = "output.root")
   events->SetBranchAddress("numScintillationPhotons", &numScintillationPhotons);
   events->SetBranchAddress("earliestPETime", &earliestPETime);
 
-  if (events->GetBranch("pmtWaveform")) {
+  const bool hasPmtWaveform = events->GetBranch("pmtWaveform") != nullptr;
+  if (hasPmtWaveform) {
     events->SetBranchAddress("pmtWaveform", &pmtWaveform);
   }
+
+  constexpr double waveformSampleSpacing = 2.0;  // ns
 
   std::vector<double> selectedEdepBGO;
   std::vector<double> selectedEarliestPETime;
   std::vector<int> selectedNumPmtPhotons;
   std::vector<int> selectedNumCerenkovPhotons;
   std::vector<int> selectedNumScintillationPhotons;
+  std::vector<double> selectedIntegratedCharge;
   std::vector<int> waveformEventIDs;
   std::vector<std::vector<double>> firstWaveforms;
 
@@ -71,6 +76,13 @@ void analyze_events(const char* fileName = "output.root")
     selectedNumPmtPhotons.push_back(numPmtPhotons);
     selectedNumCerenkovPhotons.push_back(numCerenkovPhotons);
     selectedNumScintillationPhotons.push_back(numScintillationPhotons);
+    if (hasPmtWaveform) {
+      const double integratedCharge = pmtWaveform
+          ? std::accumulate(pmtWaveform->begin(), pmtWaveform->end(), 0.0)
+              * waveformSampleSpacing
+          : 0.0;
+      selectedIntegratedCharge.push_back(integratedCharge);
+    }
     if (pmtWaveform && firstWaveforms.size() < 3) {
       waveformEventIDs.push_back(eventID);
       firstWaveforms.push_back(*pmtWaveform);
@@ -158,12 +170,43 @@ void analyze_events(const char* fileName = "output.root")
   histNumScintillationPhotons->SetLineColor(kRed + 1);
   histNumScintillationPhotons->SetLineWidth(2);
 
+  TH1D* histIntegratedCharge = nullptr;
+  if (!selectedIntegratedCharge.empty()) {
+    const auto integratedChargeRange =
+        std::minmax_element(selectedIntegratedCharge.begin(), selectedIntegratedCharge.end());
+    double integratedChargeMin = *integratedChargeRange.first;
+    double integratedChargeMax = *integratedChargeRange.second;
+
+    if (integratedChargeMin == integratedChargeMax) {
+      const double halfWidth = integratedChargeMin == 0.
+          ? 0.5
+          : 0.05 * std::abs(integratedChargeMin);
+      integratedChargeMin -= halfWidth;
+      integratedChargeMax += halfWidth;
+    } else {
+      const double padding = 0.05 * (integratedChargeMax - integratedChargeMin);
+      integratedChargeMin -= padding;
+      integratedChargeMax += padding;
+    }
+
+    histIntegratedCharge =
+        new TH1D("integrated_charge",
+                 "Integrated charge;Integrated charge [a.u.];Number of entries",
+                 100,
+                 integratedChargeMin,
+                 integratedChargeMax);
+    histIntegratedCharge->SetDirectory(nullptr);
+  }
+
   for (std::size_t iEvent = 0; iEvent < selectedEdepBGO.size(); ++iEvent) {
     histEdepBGO->Fill(selectedEdepBGO[iEvent]);
     histEarliestPETime->Fill(selectedEarliestPETime[iEvent]);
     histNumPmtPhotons->Fill(selectedNumPmtPhotons[iEvent]);
     histNumCerenkovPhotons->Fill(selectedNumCerenkovPhotons[iEvent]);
     histNumScintillationPhotons->Fill(selectedNumScintillationPhotons[iEvent]);
+    if (histIntegratedCharge) {
+      histIntegratedCharge->Fill(selectedIntegratedCharge[iEvent]);
+    }
   }
 
   TCanvas* c1 = new TCanvas("c1", "BGO energy deposition");
@@ -195,8 +238,17 @@ void analyze_events(const char* fileName = "output.root")
   photonLegend->Draw();
   c3->Update();
 
-  if (!events->GetBranch("pmtWaveform")) {
-    std::cerr << "No pmtWaveform branch found; waveform figures were not created." << std::endl;
+  if (histIntegratedCharge) {
+    TCanvas* c4 = new TCanvas("c4", "Integrated charge");
+    c4->cd();
+    histIntegratedCharge->Draw("HIST");
+    c4->Update();
+  }
+
+  if (!hasPmtWaveform) {
+    std::cerr << "No pmtWaveform branch found; waveform figures and the integrated-charge "
+                 "histogram were not created."
+              << std::endl;
   }
 
   for (std::size_t iWaveform = 0; iWaveform < firstWaveforms.size(); ++iWaveform) {
