@@ -69,4 +69,4 @@
 /gps/ene/mono 4.0 GeV
 
 # Number of events. Change this line for longer or shorter studies.
-/run/beamOn 10000
+/run/beamOn 100000

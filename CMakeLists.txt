@@ -80,6 +80,14 @@ target_include_directories(check_waveform_observables PRIVATE include)
 
 target_link_libraries(check_waveform_observables PRIVATE ${Geant4_LIBRARIES})
 
+add_executable(check_waveform_charge
+  tests/check_waveform_charge.cc
+)
+
+target_compile_features(check_waveform_charge PRIVATE cxx_std_17)
+
+target_include_directories(check_waveform_charge PRIVATE analysis)
+
 add_executable(check_detector_geometry
   tests/check_detector_geometry.cc
   src/DetectorConstruction.cc
@@ -109,18 +117,21 @@ add_test(NAME check_single_photoelectron_pulse
 add_test(NAME check_single_photoelectron_gain
          COMMAND check_single_photoelectron_gain)
 add_test(NAME check_waveform_observables COMMAND check_waveform_observables)
+add_test(NAME check_waveform_charge COMMAND check_waveform_charge)
 add_test(NAME check_detector_geometry COMMAND check_detector_geometry)
 add_test(NAME check_tracking_action COMMAND check_tracking_action)
 
 set(AMBETAGGER_MACROS
   macros/run_one.mac
   macros/init_vis.mac
-  macros/run_10_gamma.mac
-  macros/run_1000_gamma.mac
-  macros/run_100_optical_photons.mac
   macros/optical_backward.mac
   macros/optical_forward.mac
   macros/optical_sideways.mac
+  macros/run_cosmic_muon_to_bgo.mac 
+  macros/run_gamma_4.4MeV_source_capsule_iso.mac 
+  macros/run_neutron_4MeV_source_capsule_iso.mac
+  macros/run_gamma.mac 
+  macros/run_neutron_4MeV.mac
 )
 
 foreach(_macro ${AMBETAGGER_MACROS})
