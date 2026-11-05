@@ -13,9 +13,9 @@ namespace
 constexpr double kTauRiseNs = 1.5;
 constexpr double kTauFallNs = 5.0;
 constexpr double kTransitTimeNs = 23.0;
-constexpr G4double kBinWidth = 2.0 * ns;
+const G4double kBinWidth = 2.0 * ns;
 constexpr G4int kSampleCount = 1500;
-constexpr G4double kTriggerTime = 700.0 * ns;
+const G4double kTriggerTime = 700.0 * ns;
 constexpr G4double kNoiseSigma = 0.001;
 constexpr G4double kGainMean = 0.005;
 constexpr G4double kGainSigma = 0.0006;

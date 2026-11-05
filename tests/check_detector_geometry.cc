@@ -499,7 +499,7 @@ int main()
     return 1;
   }
 
-  constexpr double kTolerance = 1.0e-9 * mm;
+  const double kTolerance = 1.0e-9 * mm;
 
   ok &= CheckClose("BGO inner bore radius",
                    bgoSolid->GetInnerRadius(),

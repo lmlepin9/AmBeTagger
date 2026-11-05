@@ -8,9 +8,9 @@ namespace AmBeTagger
 {
 namespace
 {
-constexpr G4double kTauRise = 1.5 * ns;
-constexpr G4double kTauFall = 5.0 * ns;
-constexpr G4double kTransitTime = 23.0 * ns;
+const G4double kTauRise = 1.5 * ns;
+const G4double kTauFall = 5.0 * ns;
+const G4double kTransitTime = 23.0 * ns;
 }
 
 G4double SinglePhotoelectronPulse::Amplitude(G4double timeAfterPe) const

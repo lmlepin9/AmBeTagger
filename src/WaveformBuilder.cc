@@ -6,8 +6,8 @@
 namespace
 {
 constexpr G4int kSampleCount = 1500;
-constexpr G4double kSampleSpacing = 2.0 * ns;
-constexpr G4double kTriggerTime = 700.0 * ns;
+const G4double kSampleSpacing = 2.0 * ns;
+const G4double kTriggerTime = 700.0 * ns;
 }
 
 namespace AmBeTagger

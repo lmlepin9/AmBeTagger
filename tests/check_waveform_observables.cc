@@ -17,7 +17,7 @@ bool CloseEnough(double actual, double expected, double tolerance)
 int main()
 {
   const AmBeTagger::WaveformObservables observables;
-  constexpr G4double sampleSpacing = 2.0 * ns;
+  const G4double sampleSpacing = 2.0 * ns;
 
   const AmBeTagger::WaveformSummary emptySummary =
       observables.Analyze({}, sampleSpacing);

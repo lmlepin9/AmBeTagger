@@ -54,7 +54,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4Element* sodium = nist->FindOrBuildElement("Na");
   G4Element* aluminum = nist->FindOrBuildElement("Al");
 
-  constexpr G4double bgoDensity = 7.13 * g / cm3; 
+  const G4double bgoDensity = 7.13 * g / cm3; 
 
   G4Material* bgo = new G4Material(
     "BGO",
@@ -65,7 +65,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   bgo->AddElement(germanium,3);
   bgo->AddElement(oxygen,12);
 
-  constexpr G4double bgoBirksConstant = 0.008415 * mm / MeV;
+  const G4double bgoBirksConstant = 0.008415 * mm / MeV;
   bgo->GetIonisation()->SetBirksConstant(bgoBirksConstant);
 
   const std::vector<G4double> photonEnergy =  {
@@ -165,7 +165,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   air->SetMaterialPropertiesTable(airMpt);
 
   G4Element* silicon = nist->FindOrBuildElement("Si");
-  constexpr G4double ej550Density = 1.06 * g / cm3;
+  const G4double ej550Density = 1.06 * g / cm3;
 
   G4Material* opticalCoupling = new G4Material(
       "EJ550OpticalGrease",
@@ -196,7 +196,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       couplingAbsorptionLength);
   opticalCoupling->SetMaterialPropertiesTable(couplingMpt);
 
-  constexpr G4double uvGlassDensity = 2.2 * g / cm3;
+  const G4double uvGlassDensity = 2.2 * g / cm3;
 
   G4Material* pmtWindowMaterial = new G4Material(
       "UVGlass",
@@ -224,7 +224,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       pmtWindowAbsorptionLength);
   pmtWindowMaterial->SetMaterialPropertiesTable(pmtWindowMpt);
 
-  constexpr G4double borosilicateDensity = 2.23 * g / cm3;
+  const G4double borosilicateDensity = 2.23 * g / cm3;
 
   G4Material* pmtBodyMaterial = new G4Material(
       "BorosilicateGlass",
@@ -247,7 +247,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       pmtWindowAbsorptionLength);
   pmtBodyMaterial->SetMaterialPropertiesTable(pmtBodyMpt);
 
-  constexpr G4double polyurethaneFoamDensity = 0.032 * g / cm3;
+  const G4double polyurethaneFoamDensity = 0.032 * g / cm3;
 
   G4Material* polyurethaneFoam = new G4Material(
       "PolyurethaneFoam",
@@ -258,7 +258,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   polyurethaneFoam->AddElement(nitrogen, 0.060);
   polyurethaneFoam->AddElement(oxygen, 0.250);
 
-  constexpr G4double stainlessSteelDensity = 8.0 * g / cm3;
+  const G4double stainlessSteelDensity = 8.0 * g / cm3;
 
   G4Material* stainlessSteel = new G4Material(
       "StainlessSteel",
@@ -266,7 +266,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       1);
   stainlessSteel->AddMaterial(nistStainlessSteel, 1.0);
 
-  constexpr G4double whitePvcDensity = 1.38 * g / cm3;
+  const G4double whitePvcDensity = 1.38 * g / cm3;
 
   G4Material* whitePvc = new G4Material(
       "WhitePVC",
@@ -277,7 +277,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   // Bulk optical properties let photons enter PVC without NoRINDEX; the short
   // absorption length is provisional and makes the material effectively opaque.
   constexpr G4double whitePvcRefractiveIndex = 1.54;
-  constexpr G4double whitePvcBulkAbsorptionLength = 0.1 * mm;
+  const G4double whitePvcBulkAbsorptionLength = 0.1 * mm;
   constexpr G4double whitePvcReflectivity = 0.80;
   const std::vector<G4double> whitePvcRefractiveIndexValues(
       n_entries,
@@ -329,7 +329,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   whitePvcSurface->SetMaterialPropertiesTable(whitePvcSurfaceMpt);
 
 
-  constexpr G4double worldHalfLength = 50.0 * cm;
+  const G4double worldHalfLength = 50.0 * cm;
 
   G4Box* worldSolid = new G4Box(
       "WorldSolid",
@@ -354,9 +354,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     true);
 
 
-   constexpr G4double bgoMaxRadius = 2.5 * cm;
-   constexpr G4double bgoMinRadius = 1.0 * mm;
-   constexpr G4double bgoHalfLengthZ = 2.5 * cm;
+   const G4double bgoMaxRadius = 2.5 * cm;
+   const G4double bgoMinRadius = 1.0 * mm;
+   const G4double bgoHalfLengthZ = 2.5 * cm;
 
 
    G4Tubs* bgoSolid = new G4Tubs(
@@ -386,19 +386,19 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   const G4Colour stainlessSteelColour(0.58, 0.60, 0.63, 0.76);
 
-  constexpr G4double sourceShieldRadius = 26.025 * mm;
-  constexpr G4double sourceShieldHalfThickness = 0.5 * 11.63 * mm;
-  constexpr G4double sourceCapsuleOuterRadius = 7.8 * mm;
-  constexpr G4double sourceCapsuleInnerRadius = 6.8 * mm;
-  constexpr G4double sourceCapsuleHalfLength = 5.0 * mm;
-  constexpr G4double sourceSurroundingShieldInnerRadius = 8.0 * mm;
-  constexpr G4double sourceShieldFrontZ =
+  const G4double sourceShieldRadius = 26.025 * mm;
+  const G4double sourceShieldHalfThickness = 0.5 * 11.63 * mm;
+  const G4double sourceCapsuleOuterRadius = 7.8 * mm;
+  const G4double sourceCapsuleInnerRadius = 6.8 * mm;
+  const G4double sourceCapsuleHalfLength = 5.0 * mm;
+  const G4double sourceSurroundingShieldInnerRadius = 8.0 * mm;
+  const G4double sourceShieldFrontZ =
       -bgoHalfLengthZ - 0.25 * mm;
-  constexpr G4double sourceShieldZ =
+  const G4double sourceShieldZ =
       sourceShieldFrontZ - sourceShieldHalfThickness;
-  constexpr G4double sourceShieldBackZ =
+  const G4double sourceShieldBackZ =
       sourceShieldZ - sourceShieldHalfThickness;
-  constexpr G4double sourceCapsuleZ =
+  const G4double sourceCapsuleZ =
       sourceShieldBackZ - sourceCapsuleHalfLength;
 
   G4Tubs* sourceShieldSolid = new G4Tubs(
@@ -518,10 +518,10 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   wrapSurface->SetModel(glisur);
   wrapSurface->SetMaterialPropertiesTable(wrapMpt);
 
-  constexpr G4double wrapThickness = 0.25 * mm;
-  constexpr G4double wrapOuterRadius = bgoMaxRadius + wrapThickness;
-  constexpr G4double wrapHalfThickness = 0.5 * wrapThickness;
-  constexpr G4double pmtWindowRadius = 14.25 * mm;
+  const G4double wrapThickness = 0.25 * mm;
+  const G4double wrapOuterRadius = bgoMaxRadius + wrapThickness;
+  const G4double wrapHalfThickness = 0.5 * wrapThickness;
+  const G4double pmtWindowRadius = 14.25 * mm;
 
   G4Tubs* wrapBarrelSolid = new G4Tubs(
       "BgoTeflonBarrelWrapSolid",
@@ -619,10 +619,10 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       wrapSurface);
 
 
-  constexpr G4double couplingRadius = pmtWindowRadius;
-  constexpr G4double couplingHalfThickness = 0.05 * mm;
-  constexpr G4double bgoFrontZ = bgoHalfLengthZ;
-  constexpr G4double couplingZ = bgoFrontZ + couplingHalfThickness;
+  const G4double couplingRadius = pmtWindowRadius;
+  const G4double couplingHalfThickness = 0.05 * mm;
+  const G4double bgoFrontZ = bgoHalfLengthZ;
+  const G4double couplingZ = bgoFrontZ + couplingHalfThickness;
 
   G4Tubs* couplingSolid = new G4Tubs(
       "CouplingSolid",
@@ -649,8 +649,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       0,
       true);
 
-  constexpr G4double pmtWindowHalfThickness = 0.5 * mm;
-  constexpr G4double pmtWindowZ =
+  const G4double pmtWindowHalfThickness = 0.5 * mm;
+  const G4double pmtWindowZ =
       bgoFrontZ + 2.0 * couplingHalfThickness + pmtWindowHalfThickness;
 
   G4Tubs* pmtWindowSolid = new G4Tubs(
@@ -678,9 +678,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       0,
       true);
 
-  constexpr G4double pmtPlaneRadius = 12.5 * mm;
-  constexpr G4double pmtPlaneHalfThickness = 0.005 * mm;
-  constexpr G4double pmtPlaneZ =
+  const G4double pmtPlaneRadius = 12.5 * mm;
+  const G4double pmtPlaneHalfThickness = 0.005 * mm;
+  const G4double pmtPlaneZ =
       bgoFrontZ + 2.0 * couplingHalfThickness
       + 2.0 * pmtWindowHalfThickness + pmtPlaneHalfThickness;
 
@@ -709,9 +709,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       0,
       true);
 
-  constexpr G4double pmtBodyRadius = 12.25 * mm;
-  constexpr G4double pmtBodyHalfLength = 50.0 * mm;
-  constexpr G4double pmtBodyZ =
+  const G4double pmtBodyRadius = 12.25 * mm;
+  const G4double pmtBodyHalfLength = 50.0 * mm;
+  const G4double pmtBodyZ =
       pmtPlaneZ + pmtPlaneHalfThickness + pmtBodyHalfLength;
 
   G4Tubs* pmtBodySolid = new G4Tubs(
@@ -739,8 +739,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       0,
       true);
 
-  constexpr G4double pmtFoamInnerRadius = 14.29 * mm;
-  constexpr G4double pmtFoamOuterRadius = 26.025 * mm;
+  const G4double pmtFoamInnerRadius = 14.29 * mm;
+  const G4double pmtFoamOuterRadius = 26.025 * mm;
 
   G4Tubs* pmtFoamSolid = new G4Tubs(
       "PmtFoamSupportSolid",
@@ -769,8 +769,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   const G4Colour whitePvcColour(0.96, 0.96, 0.90, 0.30);
 
-  constexpr G4double readoutPvcHolderHalfLength = 60.0 * mm;
-  constexpr G4double readoutPvcHolderZ =
+  const G4double readoutPvcHolderHalfLength = 60.0 * mm;
+  const G4double readoutPvcHolderZ =
       pmtBodyZ + pmtBodyHalfLength + readoutPvcHolderHalfLength;
   const std::vector<G4double> readoutPvcHolderZPlanes = {
       -60.0 * mm,
@@ -824,21 +824,21 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       0,
       true);
 
-  constexpr G4double outerPvcInnerRadius = sourceShieldRadius;
-  constexpr G4double outerPvcOuterRadius = 35.235 * mm;
-  constexpr G4double outerPvcBarrelHalfLength = 190.0 * mm;
-  constexpr G4double rearEndCapHalfLength = 17.365 * mm;
-  constexpr G4double rearEndCapSourceTubeLength = 11.63 * mm;
-  constexpr G4double rearEndCapInsertionStartZ = 2.636 * mm;
-  constexpr G4double rearEndCapFrontZ =
+  const G4double outerPvcInnerRadius = sourceShieldRadius;
+  const G4double outerPvcOuterRadius = 35.235 * mm;
+  const G4double outerPvcBarrelHalfLength = 190.0 * mm;
+  const G4double rearEndCapHalfLength = 17.365 * mm;
+  const G4double rearEndCapSourceTubeLength = 11.63 * mm;
+  const G4double rearEndCapInsertionStartZ = 2.636 * mm;
+  const G4double rearEndCapFrontZ =
       sourceCapsuleZ - sourceCapsuleHalfLength;
-  constexpr G4double rearEndCapZ =
+  const G4double rearEndCapZ =
       rearEndCapFrontZ - rearEndCapHalfLength - rearEndCapSourceTubeLength;
-  constexpr G4double outerPvcBarrelBackZ =
+  const G4double outerPvcBarrelBackZ =
       rearEndCapZ + rearEndCapInsertionStartZ;
-  constexpr G4double outerPvcBarrelZ =
+  const G4double outerPvcBarrelZ =
       outerPvcBarrelBackZ + outerPvcBarrelHalfLength;
-  constexpr G4double outerPvcBarrelFrontZ =
+  const G4double outerPvcBarrelFrontZ =
       outerPvcBarrelZ + outerPvcBarrelHalfLength;
 
   G4Tubs* outerPvcBarrelSolid = new G4Tubs(
@@ -931,7 +931,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
       outerPvcOuterRadius,
       outerPvcOuterRadius,
       19.575 * mm};
-  constexpr G4double frontEndCapZ =
+  const G4double frontEndCapZ =
       outerPvcBarrelFrontZ + 15.725 * mm;
 
   G4Polycone* frontEndCapSolid = new G4Polycone(
